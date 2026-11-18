@@ -88,7 +88,20 @@ export const editorCss = `
 .sbe-mediabox .w,.sbe-mediabox .e{top:50%;width:10px;height:30px;margin-top:-15px;cursor:ew-resize}
 .sbe-mediabox .w{left:-7px}
 .sbe-mediabox .e{right:-7px}
+.sbe-mediabox[data-kind=shape] .nw,.sbe-mediabox[data-kind=shape] .ne{display:none}
+.sbe-mediabox[data-kind=shape][data-align=left] .w,.sbe-mediabox[data-kind=shape][data-align=right] .e{display:none}
 .sbe-mediabox .s{left:50%;bottom:-7px;width:30px;height:10px;margin-left:-15px;cursor:ns-resize}
+.sbfx{display:flex;flex-direction:column;gap:8px}
+.sbfx>b{font-size:11px;font-weight:500;color:var(--mute);margin-top:4px}
+.sbfx>b:first-child{margin-top:0}
+.sbfx .sbe-line{gap:8px}
+.sbfx .sbe-line input[type=range]{flex:1;width:auto}
+.sbfx-val{flex:none;width:44px;text-align:right;color:var(--mute);font-size:12px}
+.sbfx-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sbfx-seg{display:flex;gap:2px;padding:2px;background:var(--chip);border-radius:8px;flex-wrap:wrap}
+.sbfx-seg button{padding:5px 9px;border:0;border-radius:6px;background:transparent;color:var(--mute);font-size:12px}
+.sbfx-seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.sbfx-btn{padding:6px 10px;border:1px solid var(--field);border-radius:8px;background:#fff;color:var(--ink);font-size:12px}
 .sbp{display:flex;flex-direction:column;gap:10px;width:208px}
 .sbp-box{position:relative;height:140px;border-radius:10px;cursor:crosshair;touch-action:none;background-image:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent)}
 .sbp-hue{position:relative;height:14px;border-radius:999px;cursor:pointer;touch-action:none;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
@@ -111,6 +124,7 @@ export const editorCss = `
 .sbq-dot{flex:none;width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.2);background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/8px 8px}
 .sbq-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:31;width:240px;display:flex;flex-direction:column;gap:8px;padding:10px;background:#fff;border:1px solid var(--field);border-radius:12px;box-shadow:0 12px 32px rgba(30,28,24,.2)}
 .sbq-bar[data-pop=up] .sbq-pop{top:auto;bottom:calc(100% + 6px)}
+.sbq-fx{width:280px;max-height:70vh;overflow:auto;gap:12px}
 .sbq-media{width:270px}
 .sbq-colors b{font-size:11px;font-weight:500;color:var(--mute)}
 .sbq-sw{display:flex;flex-wrap:wrap;gap:6px}

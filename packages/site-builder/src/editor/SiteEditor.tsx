@@ -528,6 +528,9 @@ export function SiteEditor({
   const quickRef = useRef<HTMLDivElement | null>(null);
   // Onde foi o último clique no canvas: a lista "Neste ponto" mostra tudo o que está empilhado ali.
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
+  // Arrasto de uma forma em andamento e de onde ele partiu.
+  const shapeDrag = useRef(false);
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const hoverBoxRef = useRef<HTMLDivElement | null>(null);
   const guideVRef = useRef<HTMLDivElement | null>(null);
   const guideHRef = useRef<HTMLDivElement | null>(null);
@@ -762,14 +765,23 @@ export function SiteEditor({
       selectedId && !handActive && !inlineEdit.current
         ? root.querySelector<HTMLElement>(`[data-block-id="${selectedId}"]`)
         : null;
+    const isShape = Boolean(block?.dataset.blockType?.startsWith("shape"));
     const media =
       block?.dataset.blockType === "postItem"
         ? block.querySelector<HTMLElement>(".sb-post-media")
-        : null;
+        : isShape
+          ? (block?.querySelector<HTMLElement>(".sb-fig") ?? null)
+          : null;
     if (!media) {
       box.style.display = "none";
       return;
     }
+    box.dataset.kind = isShape ? "shape" : "media";
+    box.dataset.align = isShape
+      ? String(
+          findBlock(siteRef.current, selectedId ?? "")?.props.align ?? "left"
+        )
+      : "center";
     const r = media.getBoundingClientRect();
     box.style.display = "block";
     box.style.left = `${r.left}px`;
@@ -802,7 +814,20 @@ export function SiteEditor({
     bar.dataset.pop = top - c.top >= 300 && top < r.top ? "up" : "down";
   };
 
+  /** Tira o tamanho provisório do arrasto das formas: depois de gravar, quem manda é o estilo do elemento. */
+  const clearLiveSize = () => {
+    if (shapeDrag.current) return;
+    for (const el of Array.from(
+      canvasRef.current?.querySelectorAll<HTMLElement>("[data-live-size]") ?? []
+    )) {
+      el.style.removeProperty("width");
+      el.style.removeProperty("height");
+      el.removeAttribute("data-live-size");
+    }
+  };
+
   const paintSelection = () => {
+    clearLiveSize();
     paintSelectionBox();
     paintMedia();
     paintQuick();
@@ -815,6 +840,91 @@ export function SiteEditor({
    * retrato perde menos). Alças dos lados: estreitam ou alargam a moldura mantendo a altura, e a mídia é
    * cortada dos lados. Mostra ao vivo e grava ao soltar.
    */
+  /**
+   * Arrastar uma alça de uma forma (linha, retângulo, quadrado, círculo): grava a largura e a altura em px no
+   * estilo do elemento. Quadrado e círculo mantêm os lados iguais; a linha engrossa pela alça de baixo.
+   */
+  const startShapeResize = (
+    blockId: string,
+    mode: "corner" | "height" | "side",
+    corner: string
+  ) => {
+    const node = blockEl(blockId);
+    const el = node?.querySelector<HTMLElement>(".sb-fig");
+    const block = findBlock(siteRef.current, blockId);
+    const wrap = el?.parentElement;
+    const start = pointerStart.current;
+    if (!(node && el && wrap && block && start)) return;
+    const cs = getComputedStyle(wrap);
+    const maxW =
+      wrap.clientWidth -
+      Number.parseFloat(cs.paddingLeft) -
+      Number.parseFloat(cs.paddingRight);
+    const w0 = el.offsetWidth;
+    const h0 = el.offsetHeight;
+    const align = String(block.props.align ?? "left");
+    const side = corner.includes("w") ? -1 : 1;
+    // Centrada, a forma cresce dos dois lados (o dobro do arrasto); alinhada, só pelo lado de fora.
+    const factor =
+      align === "center"
+        ? 2 * side
+        : align === "left"
+          ? side === 1
+            ? 1
+            : 0
+          : side === -1
+            ? -1
+            : 0;
+    const square = /sb-fig-(square|circle)/.test(el.className);
+    let w = w0;
+    let h = h0;
+    let moved = false;
+    shapeDrag.current = true;
+    const move = (ev: globalThis.PointerEvent) => {
+      moved = true;
+      const dx = (ev.clientX - start.x) / zoom;
+      const dy = (ev.clientY - start.y) / zoom;
+      if (mode !== "height") w = Math.min(maxW, Math.max(8, w0 + factor * dx));
+      if (mode !== "side") h = Math.min(1200, Math.max(1, h0 + dy));
+      if (square) {
+        const size =
+          mode === "side" ? w : mode === "height" ? h : Math.max(w, h);
+        w = Math.min(maxW, size);
+        h = w;
+      }
+      el.dataset.liveSize = "1";
+      el.style.setProperty("width", `${Math.round(w)}px`, "important");
+      el.style.setProperty("height", `${Math.round(h)}px`, "important");
+      paintMedia();
+      paintSelectionBox();
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      shapeDrag.current = false;
+      if (!moved) return;
+      justDragged.current = true;
+      setTimeout(() => {
+        justDragged.current = false;
+      }, 0);
+      edit(
+        updateElementStyle(siteRef.current, blockId, pathWithin(el, node), {
+          height: Math.round(h),
+          width: Math.round(w),
+        }),
+        {
+          id: blockId,
+          key: `shape:${blockId}`,
+          label: `Redimensionou · ${labelOf(block.type)}`,
+        }
+      );
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+
   const startMediaResize = (
     e: PointerEvent<HTMLElement>,
     mode: "corner" | "height" | "side",
@@ -824,6 +934,11 @@ export function SiteEditor({
     e.preventDefault();
     e.stopPropagation();
     const blockId = selectedId;
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+    if (findBlock(siteRef.current, blockId)?.type.startsWith("shape")) {
+      startShapeResize(blockId, mode, corner);
+      return;
+    }
     const media = canvasRef.current?.querySelector<HTMLElement>(
       `[data-block-id="${blockId}"] .sb-post-media`
     );
@@ -2074,23 +2189,28 @@ export function SiteEditor({
   const currentPost = route.kind === "post" ? route.post : undefined;
 
   /** Estilo do elemento (ou do bloco inteiro) selecionado; vale para o painel e para a barra do canvas. */
-  const applyStyle = (
+  const applyStyleAt = (
+    path: string,
     patch: Record<string, string | number | undefined>,
     what: string
   ) => {
     if (!selected) return;
     const now = siteRef.current;
     edit(
-      elPath
-        ? updateElementStyle(now, selected.id, elPath, patch)
+      path
+        ? updateElementStyle(now, selected.id, path, patch)
         : updateBlockStyle(now, selected.id, patch),
       {
         id: selected.id,
-        key: `${selected.id}-s${elPath}-${Object.keys(patch).join()}`,
+        key: `${selected.id}-s${path}-${Object.keys(patch).join()}`,
         label: `${what} · ${labelOf(selected.type)}`,
       }
     );
   };
+  const applyStyle = (
+    patch: Record<string, string | number | undefined>,
+    what: string
+  ) => applyStyleAt(elPath, patch, what);
 
   /**
    * Muda a camada do elemento selecionado entre os que se sobrepõem a ele (irmãos dele; se nenhum encosta, os do
@@ -2273,7 +2393,17 @@ export function SiteEditor({
         });
       }
     }
+    // A mídia de um post fica numa moldura que corta; borda, cantos e sombra vão nela, senão a sombra seria cortada.
+    const wrap =
+      (kind === "image" || kind === "video") &&
+      el.parentElement?.classList.contains("sb-post-media")
+        ? el.parentElement
+        : null;
+    const effectPath = wrap && node ? pathWithin(wrap, node) : elPath;
     return {
+      effectPath,
+      effectStyle:
+        (effectPath ? selected.elStyles?.[effectPath] : selected.style) ?? {},
       hasText: (el.textContent ?? "").trim().length > 0 && kind !== "image",
       kind,
       layers: layers.slice(0, 12),
@@ -2787,6 +2917,7 @@ export function SiteEditor({
               quickRef.current = el;
             }}
             customFonts={customFonts(site.theme)}
+            effectStyle={quick.effectStyle}
             hasText={quick.hasText}
             key={`${selected?.id}:${elPath}:${focusHint.n}`}
             kind={quick.kind}
@@ -2794,6 +2925,9 @@ export function SiteEditor({
             liveColors={quick.live}
             liveText={quick.liveText}
             media={quick.media}
+            onEffect={(patch, what) =>
+              applyStyleAt(quick.effectPath, patch, what)
+            }
             onLayer={changeLayer}
             onPickLayer={(blockId, path, label) => {
               selectElement(blockId, path, label);

@@ -17,6 +17,7 @@ const GROUP_LABEL: Record<BlockGroup, string> = {
   content: "Conteúdo",
   layout: "Estrutura",
   media: "Mídia",
+  shapes: "Formas",
 };
 
 export interface LayerSection {

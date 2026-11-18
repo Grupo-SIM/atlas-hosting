@@ -5,6 +5,7 @@ import type { FieldDef } from "../blocks/types.js";
 import { fontStack, SITE_FONTS } from "../renderer/fonts.js";
 import { uploadSizeError } from "../upload-limits.js";
 import { ColorPickerButton } from "./ColorPicker.js";
+import { BorderControls, ShadowControls } from "./EffectsControls.js";
 import { FieldInput } from "./fields.js";
 import { Icon } from "./icons.js";
 import { LAYER_OPS, type LayerOp } from "./layer-order.js";
@@ -477,6 +478,52 @@ function LayersMenu({
   );
 }
 
+/** Borda, cantos arredondados e sombra (no texto, só a sombra das letras). */
+function EffectsMenu({
+  kind,
+  onEffect,
+  style,
+}: {
+  kind: QuickKind;
+  onEffect: (
+    patch: Record<string, string | number | undefined>,
+    what: string
+  ) => void;
+  style: Record<string, string | number | undefined>;
+}) {
+  const { open, ref, setOpen } = usePopover();
+  return (
+    <div className="sbq-menu" ref={ref}>
+      <button
+        aria-expanded={open}
+        className={open ? "sbq-btn on" : "sbq-btn"}
+        onClick={() => setOpen(o => !o)}
+        title={
+          kind === "text"
+            ? "Sombra das letras"
+            : "Borda, cantos arredondados e sombra"
+        }
+        type="button"
+      >
+        {kind === "text" ? "Sombra" : "Borda e sombra"}
+        <Icon name="chevron-down" size={12} />
+      </button>
+      {open ? (
+        <div className="sbq-pop sbq-fx">
+          {kind === "text" ? (
+            <ShadowControls onStyle={onEffect} style={style} text />
+          ) : (
+            <>
+              <BorderControls onStyle={onEffect} style={style} />
+              <ShadowControls onStyle={onEffect} style={style} />
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const Toggle = ({
   children,
   on,
@@ -506,12 +553,14 @@ const Toggle = ({
 export function QuickBar({
   barRef,
   customFonts,
+  effectStyle,
   hasText,
   kind,
   layers,
   liveColors,
   liveText,
   media,
+  onEffect,
   onLayer,
   onPickLayer,
   onStyle,
@@ -520,12 +569,18 @@ export function QuickBar({
 }: {
   barRef: (el: HTMLDivElement | null) => void;
   customFonts: { name: string; url: string }[];
+  /** Estilo do elemento que a borda e a sombra mudam (a moldura da mídia, quando ela tem). */
+  effectStyle: Record<string, string | number | undefined>;
   hasText: boolean;
   kind: QuickKind;
   layers: LayerHit[];
   liveColors?: LiveColors;
   liveText?: LiveText;
   media?: QuickMedia;
+  onEffect: (
+    patch: Record<string, string | number | undefined>,
+    what: string
+  ) => void;
   onLayer: (op: LayerOp) => void;
   onPickLayer: (blockId: string, path: string, label: string) => void;
   onStyle: (patch: Record<string, string | number>, what: string) => void;
@@ -673,6 +728,7 @@ export function QuickBar({
           />
         </>
       )}
+      <EffectsMenu kind={kind} onEffect={onEffect} style={effectStyle} />
       <LayersMenu layers={layers} onLayer={onLayer} onPick={onPickLayer} />
     </div>
   );

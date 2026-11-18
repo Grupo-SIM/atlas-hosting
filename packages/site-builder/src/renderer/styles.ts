@@ -203,6 +203,12 @@ export const siteCss = `
 .sb-post-header time{display:block;color:var(--sb-muted);font-size:.8rem}
 .sb-post-content .sb-container{width:100%;padding-block:6px}
 .sb-post-content .sb-image img{border-radius:12px}
+.sb-fig-wrap{display:flex}
+.sb-fig{flex:none;max-width:100%;box-sizing:border-box;background:var(--sb-accent);border:0 solid var(--sb-fg)}
+.sb-fig-line{width:100%;height:3px;border-radius:999px}
+.sb-fig-rect{width:260px;height:140px;border-radius:8px}
+.sb-fig-square{width:160px;height:160px;border-radius:8px}
+.sb-fig-circle{width:160px;height:160px;border-radius:50%}
 .sb-post-media{margin-inline:auto;max-width:100%;overflow:hidden;border-radius:12px}
 .sb-post-media>img,.sb-post-media>video,.sb-post-media>iframe{display:block;width:100%}
 .sb-post-media>img,.sb-post-media>video{height:auto}

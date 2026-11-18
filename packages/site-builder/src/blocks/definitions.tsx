@@ -11,6 +11,7 @@ import {
 } from "./ads.js";
 import { areaflixBlocks } from "./areaflix.js";
 import { atlasBlocks } from "./atlas.js";
+import { shapeBlocks } from "./basic-shapes.js";
 import { centralBlocks, Eyebrow } from "./central.js";
 import { consultoriaBlocks } from "./consultoria.js";
 import { corteBlocks } from "./corte.js";
@@ -2828,6 +2829,7 @@ export const blockDefinitions: BlockDefinition[] = [
   ...atlasBlocks,
   ...adBlocks,
   ...scrollTopBlocks,
+  ...shapeBlocks,
   newsSection,
   categoryHeader,
   categorySearch,

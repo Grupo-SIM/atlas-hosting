@@ -49,6 +49,7 @@ import { themeVars } from "../renderer/styles.js";
 import { VARIANT_TOKENS } from "../renderer/variant-tokens.js";
 import { UPLOAD_LIMIT_MB, uploadSizeError } from "../upload-limits.js";
 import { ColorPickerButton } from "./ColorPicker.js";
+import { BorderControls, ShadowControls } from "./EffectsControls.js";
 import { FieldInput, type ResolveChannel, Tip } from "./fields.js";
 import { formatTranslate, parseTranslate } from "./free-move.js";
 import { Icon, type IconName } from "./icons.js";
@@ -2573,6 +2574,12 @@ export function Inspector({
               value={st.maxWidth ?? ""}
             />
           </div>
+        </Section>
+
+        <Section scope={elPath ? "el" : "block"} title="Borda e sombra">
+          <BorderControls onStyle={onStyle} style={st} />
+          <ShadowControls onStyle={onStyle} style={st} />
+          <ShadowControls onStyle={onStyle} style={st} text />
         </Section>
       </div>
     </div>
