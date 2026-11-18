@@ -13,6 +13,8 @@ import {
   ProposalButton,
 } from "../../exclusividades/components/ExclusivityControls";
 import MasterTemplateControls from "./MasterTemplateControls";
+import TemplateFilter from "./TemplateFilter";
+import { filterByTags } from "./template-filter";
 import UseTemplateButton from "./UseTemplateButton";
 
 export interface GalleryTemplate {
@@ -80,7 +82,8 @@ export default function TemplateGallery({
   };
   const devOn = devAvailable && dev;
   const [search, setSearch] = useState("");
-  const [tag, setTag] = useState("Todos");
+  const [tag, setTag] = useState<string | null>(null);
+  const [sub, setSub] = useState<string | null>(null);
   const [exclusivity, setExclusivity] = useState<ExclusivityFilter>("all");
   // Dois grupos: os templates de sempre e as cópias para sites importados do WordPress (só para quem tem acesso).
   const [wp, setWp] = useState(false);
@@ -92,14 +95,11 @@ export default function TemplateGallery({
   );
   const changeGroup = (value: boolean) => {
     setWp(value);
-    setTag("Todos");
+    setTag(null);
+    setSub(null);
     setExclusivity("all");
   };
 
-  const tags = useMemo(
-    () => ["Todos", ...new Set(templates.flatMap(t => t.tags))],
-    [templates]
-  );
   const availableCount = templates.filter(
     t => t.exclusivity?.kind === "available"
   ).length;
@@ -108,9 +108,8 @@ export default function TemplateGallery({
   ).length;
 
   const q = search.trim().toLowerCase();
-  const matches = templates.filter(
+  const matches = filterByTags(templates, tag, sub).filter(
     t =>
-      (tag === "Todos" || t.tags.includes(tag)) &&
       (exclusivity === "all" ||
         (exclusivity === "available" && t.exclusivity?.kind === "available") ||
         (exclusivity === "mine" && t.exclusivity?.kind === "owned_by_me")) &&
@@ -226,16 +225,15 @@ export default function TemplateGallery({
           />
         </label>
         <div className="flex flex-wrap gap-1.5">
-          {tags.map(t => (
-            <button
-              className={chip(tag === t)}
-              key={t}
-              onClick={() => setTag(t)}
-              type="button"
-            >
-              {t}
-            </button>
-          ))}
+          <TemplateFilter
+            onChange={(nextTag, nextSub) => {
+              setTag(nextTag);
+              setSub(nextSub);
+            }}
+            sub={sub}
+            tag={tag}
+            templates={templates}
+          />
           {(availableCount > 0 || mineCount > 0) && (
             <span className="mx-1 my-2 w-px self-stretch bg-[color:var(--sbx-line)]" />
           )}
