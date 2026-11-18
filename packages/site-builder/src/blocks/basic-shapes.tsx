@@ -13,11 +13,33 @@ const JUSTIFY = {
   right: "flex-end",
 } as const;
 
-const shape = (
-  type: string,
-  label: string,
-  kind: "circle" | "line" | "rect" | "square"
-) =>
+type ShapeKind =
+  | "arrow"
+  | "circle"
+  | "cross"
+  | "diamond"
+  | "hexagon"
+  | "line"
+  | "pentagon"
+  | "rect"
+  | "square"
+  | "star"
+  | "triangle";
+
+/** Formas de lados iguais: o arrasto mantém largura e altura iguais. */
+const EQUAL = new Set<ShapeKind>([
+  "arrow",
+  "circle",
+  "cross",
+  "diamond",
+  "hexagon",
+  "pentagon",
+  "square",
+  "star",
+  "triangle",
+]);
+
+const shape = (type: string, label: string, kind: ShapeKind) =>
   defineBlock(
     z.object({
       align: z
@@ -45,7 +67,9 @@ const shape = (
           className="sb-container sb-fig-wrap"
           style={{ justifyContent: JUSTIFY[p.align] }}
         >
-          <div className={`sb-fig sb-fig-${kind}`} />
+          <div
+            className={`sb-fig sb-fig-${kind}${EQUAL.has(kind) ? "sb-fig-eq" : ""}`}
+          />
         </div>
       ),
       type,
@@ -57,4 +81,11 @@ export const shapeBlocks = [
   shape("shapeRect", "Retângulo", "rect"),
   shape("shapeSquare", "Quadrado", "square"),
   shape("shapeCircle", "Círculo", "circle"),
+  shape("shapeTriangle", "Triângulo", "triangle"),
+  shape("shapeDiamond", "Losango", "diamond"),
+  shape("shapePentagon", "Pentágono", "pentagon"),
+  shape("shapeHexagon", "Hexágono", "hexagon"),
+  shape("shapeStar", "Estrela", "star"),
+  shape("shapeArrow", "Seta", "arrow"),
+  shape("shapeCross", "Cruz", "cross"),
 ];

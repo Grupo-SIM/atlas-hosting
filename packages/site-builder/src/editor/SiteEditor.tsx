@@ -875,7 +875,7 @@ export function SiteEditor({
           : side === -1
             ? -1
             : 0;
-    const square = /sb-fig-(square|circle)/.test(el.className);
+    const square = el.classList.contains("sb-fig-eq");
     let w = w0;
     let h = h0;
     let moved = false;

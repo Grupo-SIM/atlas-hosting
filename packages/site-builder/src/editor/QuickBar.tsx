@@ -5,7 +5,11 @@ import type { FieldDef } from "../blocks/types.js";
 import { fontStack, SITE_FONTS } from "../renderer/fonts.js";
 import { uploadSizeError } from "../upload-limits.js";
 import { ColorPickerButton } from "./ColorPicker.js";
-import { BorderControls, ShadowControls } from "./EffectsControls.js";
+import {
+  AnimationControl,
+  BorderControls,
+  ShadowControls,
+} from "./EffectsControls.js";
 import { FieldInput } from "./fields.js";
 import { Icon } from "./icons.js";
 import { LAYER_OPS, type LayerOp } from "./layer-order.js";
@@ -516,6 +520,7 @@ function EffectsMenu({
             <>
               <BorderControls onStyle={onEffect} style={style} />
               <ShadowControls onStyle={onEffect} style={style} />
+              <AnimationControl onStyle={onEffect} style={style} />
             </>
           )}
         </div>

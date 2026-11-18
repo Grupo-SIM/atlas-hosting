@@ -13,6 +13,7 @@ import { areaflixBlocks } from "./areaflix.js";
 import { atlasBlocks } from "./atlas.js";
 import { shapeBlocks } from "./basic-shapes.js";
 import { centralBlocks, Eyebrow } from "./central.js";
+import { chartBlocks } from "./charts.js";
 import { consultoriaBlocks } from "./consultoria.js";
 import { corteBlocks } from "./corte.js";
 import { defineBlock } from "./define.js";
@@ -20,10 +21,12 @@ import { diarioBlocks } from "./diario.js";
 import { diarioPageBlocks } from "./diario-pages.js";
 import { ebookBlocks } from "./ebook.js";
 import { frameProps } from "./frame.js";
+import { frameBlocks } from "./frames.js";
 import { fundacaoBlocks } from "./fundacao.js";
 import { fundacaoPageBlocks } from "./fundacao-pages.js";
 import { gatilhosBlocks } from "./gatilhos.js";
 import { granaBlocks } from "./grana.js";
+import { graphicsBlocks } from "./graphics.js";
 import { habilidadesBlocks } from "./habilidades.js";
 import {
   categoryOf,
@@ -2830,6 +2833,9 @@ export const blockDefinitions: BlockDefinition[] = [
   ...adBlocks,
   ...scrollTopBlocks,
   ...shapeBlocks,
+  ...graphicsBlocks,
+  ...chartBlocks,
+  ...frameBlocks,
   newsSection,
   categoryHeader,
   categorySearch,

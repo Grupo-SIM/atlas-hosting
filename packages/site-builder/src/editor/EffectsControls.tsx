@@ -2,6 +2,7 @@
 
 import { ColorPickerButton } from "./ColorPicker.js";
 import {
+  ANIMATIONS,
   formatShadow,
   parseShadow,
   presetOf,
@@ -145,6 +146,33 @@ export function BorderControls({
           Círculo
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Animação contínua do elemento (flutuar, pulsar, girar…). */
+export function AnimationControl({
+  onStyle,
+  style,
+}: {
+  onStyle: OnStyle;
+  style: Style;
+}) {
+  return (
+    <div className="sbfx">
+      <b>Animação contínua</b>
+      <select
+        onChange={e =>
+          onStyle({ animation: e.target.value || undefined }, "Animação")
+        }
+        value={String(style.animation ?? "")}
+      >
+        {ANIMATIONS.map(a => (
+          <option key={a.value} value={a.value}>
+            {a.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

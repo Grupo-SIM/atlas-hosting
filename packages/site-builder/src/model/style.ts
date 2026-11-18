@@ -1,6 +1,7 @@
 /** Estilo por bloco, editado no painel de propriedades. Só estas propriedades CSS são aceitas. */
 export const BLOCK_STYLE_KEYS = [
   "alignItems",
+  "animation",
   "background",
   "borderColor",
   "borderRadius",

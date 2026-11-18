@@ -51,6 +51,18 @@ export const SHADOW_PRESETS: { id: string; label: string; shadow?: Shadow }[] =
     },
   ];
 
+/** Animações contínuas (os quadros estão em `renderer/styles.ts`, `@keyframes sbf-*`). */
+export const ANIMATIONS: { label: string; value: string }[] = [
+  { label: "Nenhuma", value: "" },
+  { label: "Flutuar", value: "sbf-float 3s ease-in-out infinite" },
+  { label: "Pulsar", value: "sbf-pulse 1.6s ease-in-out infinite" },
+  { label: "Girar", value: "sbf-spin 6s linear infinite" },
+  { label: "Balançar", value: "sbf-swing 2.4s ease-in-out infinite" },
+  { label: "Piscar", value: "sbf-blink 1.4s ease-in-out infinite" },
+  { label: "Quicar", value: "sbf-bounce 1.6s ease infinite" },
+  { label: "Tremer", value: "sbf-shake .8s ease-in-out infinite" },
+];
+
 const hex2 = (n: number) => n.toString(16).padStart(2, "0");
 
 const rgbaOf = (hex: string, alpha: number) => {

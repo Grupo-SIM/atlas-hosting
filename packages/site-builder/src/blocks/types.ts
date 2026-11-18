@@ -44,7 +44,15 @@ export interface FieldDef {
   showWhen?: { equals: string; key: string };
 }
 
-export type BlockGroup = "blog" | "content" | "layout" | "media" | "shapes";
+export type BlockGroup =
+  | "blog"
+  | "charts"
+  | "content"
+  | "frames"
+  | "graphics"
+  | "layout"
+  | "media"
+  | "shapes";
 
 /** `children` = filhos já renderizados (só blocos contêiner usam). */
 export type RenderFn<P> = (

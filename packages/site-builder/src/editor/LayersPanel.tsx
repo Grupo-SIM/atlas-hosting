@@ -14,7 +14,10 @@ import type { DropPlace, DropTarget } from "./tree.js";
 
 const GROUP_LABEL: Record<BlockGroup, string> = {
   blog: "Blog",
+  charts: "Gráficos e tabelas",
   content: "Conteúdo",
+  frames: "Molduras e mockups",
+  graphics: "Elementos gráficos",
   layout: "Estrutura",
   media: "Mídia",
   shapes: "Formas",
