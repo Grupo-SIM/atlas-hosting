@@ -43,6 +43,8 @@ export default async function SiteEditorPage({
     notFound();
 
   // O dono, ou um admin liberado pelo master (edita como o dono; com aprovação exigida, o que ele faz vira proposta).
+  // Antes de ler o site: post que chegar depois disto é "novo" para o editor (ver saveSite).
+  const carregadoEm = new Date().toISOString();
   const actor = await resolveSiteActor(user, siteId);
   if (!actor) notFound();
   const site = actor.site;
@@ -156,6 +158,7 @@ export default async function SiteEditorPage({
             </>
           ) : undefined
         }
+        carregadoEm={carregadoEm}
         domain={publication?.domain ?? null}
         initialSite={review?.content ?? site.content}
         originalSite={original?.site}

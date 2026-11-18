@@ -46,6 +46,9 @@ export const siteSchema: z.ZodType<Site> = z.object({
       coverImage: z.string().nullable(),
       excerpt: z.string(),
       id: z.string(),
+      origem: z
+        .object({ em: z.string().max(40), pdc: z.string().max(120) })
+        .optional(),
       publishedAt: z.string().nullable(),
       slug: slug.min(1),
       status,

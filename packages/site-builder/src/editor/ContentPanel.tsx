@@ -231,6 +231,9 @@ export function ContentPanel({
                 <button onClick={() => goTo(`/${p.slug}/`)} type="button">
                   {p.title}
                   {p.status === "draft" ? <em> rascunho</em> : null}
+                  {p.origem ? (
+                    <em title="Veio da Produção de Conteúdo"> PDC</em>
+                  ) : null}
                 </button>
               </li>
             ))}

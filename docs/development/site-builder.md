@@ -309,6 +309,13 @@ Variáveis do **frontend** (`.env`): `CLAUDE_WORKER_URL` (ex. `http://claude-wor
 worker), `ATLAS_AI_CALLBACK_URL` (como o worker enxerga o frontend; padrão `http://frontend:3000`). Sem as duas primeiras a aba
 mostra "Atlas IA indisponível". O worker recebe só `CLAUDE_WORKER_TOKEN` (sem `env_file`, para não ver segredos do app).
 
+## Posts da Produção de Conteúdo (PDC)
+O PDC (repo `Grupo-SIM/producaodeconteudo`, sistema separado) publica posts nos sites da **conta master** por uma API de máquina; nada do PDC aparece no painel do Atlas.
+- Auth: `Authorization: Bearer PDC_API_TOKEN` (mínimo 32 caracteres; sem a variável a API responde 503). O usuário é sempre o master (`MASTER_ADMIN_EMAIL` + `isAdmin`, em `lib/pdc/auth.ts`), nunca vem na requisição.
+- `GET /api/pdc/sites`: sites do Criador e WordPress do Plesk ligados aos domínios da organização.
+- `POST /api/pdc/posts`: `inserirPostExterno` (pacote, `src/import/post-externo.ts`) converte o Markdown em blocos no formato do layout do site, grava em `content.posts` com id `pdc-<id>` (reenviar atualiza, não duplica) e republica pelo mesmo caminho da reativação da hospedagem (`runPublish` com `skipHostingCheck`). Site suspenso ou nunca publicado: só salva. WordPress: WP-CLI com argumentos em lista direto na CLI do Plesk (`lib/pdc/publicar-wordpress.ts`), meta `pdc_id` evita duplicar.
+- Editor aberto: o `saveSite` recebe `abertoEm` e mantém os posts com `origem.em` mais novo que isso (o autosave do editor não apaga o post que chegou); o editor junta esses posts ao estado e mostra a marca "PDC" na lista.
+
 ## Banco
 
 - `builder_sites` (`0010_site_builder.sql`): um registro por site, conteúdo inteiro em `content jsonb`.

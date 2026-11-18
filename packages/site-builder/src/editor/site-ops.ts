@@ -176,8 +176,10 @@ export function duplicatePost(
   const source = site.posts[index];
   if (!source) return undefined;
   const next = clone(site);
+  // A cópia é do editor, não do PDC: sem `origem`, o salvamento trata como post comum.
+  const { origem: _origem, ...copia } = structuredClone(source);
   const post: Post = {
-    ...structuredClone(source),
+    ...copia,
     blocks: source.blocks.map(withNewIds),
     id: `post-${newBlockId()}`,
     slug: uniqueSlug(next, source.slug || source.title),

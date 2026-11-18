@@ -703,6 +703,36 @@ export function SiteEditor({
     try {
       const result = await onSaveRef.current(current);
       if (result.ok) {
+        const extra = result.mesclar;
+        if (extra && (extra.posts.length > 0 || extra.categories.length > 0)) {
+          const junta = (s: Site): Site => {
+            const ids = new Set(extra.posts.map(p => p.id));
+            const cats = new Set(s.categories.map(c => c.id));
+            return {
+              ...s,
+              categories: [
+                ...s.categories,
+                ...extra.categories.filter(c => !cats.has(c.id)),
+              ],
+              posts: [...extra.posts, ...s.posts.filter(p => !ids.has(p.id))],
+            };
+          };
+          // O banco já tem `current` + os posts novos; se o usuário editou no meio, a edição continua pendente.
+          savedRef.current = junta(current);
+          setHistory(h => ({
+            ...h,
+            present:
+              h.present === current ? savedRef.current : junta(h.present),
+          }));
+          flash(
+            extra.posts.length === 1
+              ? "Chegou 1 post da Produção de Conteúdo."
+              : `Chegaram ${extra.posts.length} posts da Produção de Conteúdo.`
+          );
+          setSaveState("saved");
+          setSaveError("");
+          return true;
+        }
         savedRef.current = current;
         setSaveState("saved");
         setSaveError("");
@@ -715,7 +745,7 @@ export function SiteEditor({
       setSaveError("Não foi possível salvar. Tente novamente.");
     }
     return false;
-  }, []);
+  }, [flash]);
 
   // Salva sozinho um instante depois da última edição.
   useEffect(() => {

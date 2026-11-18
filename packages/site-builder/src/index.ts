@@ -23,6 +23,14 @@ export type {
 } from "./blocks/types.js";
 export { isYouTubeChannelId } from "./blocks/youtube.js";
 export { diffSites, type SiteChange } from "./model/diff.js";
+export {
+  blocosDoMarkdown,
+  inserirPostExterno,
+  markdownParaHtml,
+  PDC_POST_PREFIX,
+  type PostExterno,
+  pdcPostId,
+} from "./import/post-externo.js";
 export * from "./model/index.js";
 export { siteSchema } from "./model/schema.js";
 export {

@@ -78,6 +78,8 @@ export interface Post {
   coverImage: string | null;
   excerpt: string;
   id: string;
+  /** Post que veio da Produção de Conteúdo (PDC): id lá e quando chegou (ISO). */
+  origem?: { em: string; pdc: string };
   publishedAt: string | null;
   slug: string;
   status: PublishStatus;

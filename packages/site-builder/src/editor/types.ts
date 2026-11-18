@@ -1,6 +1,15 @@
-import type { Site } from "../model/index.js";
+import type { Category, Post, Site } from "../model/index.js";
 
-export type SaveResult = { ok: true } | { error: string; ok: false };
+export type SaveResult =
+  | {
+      /**
+       * Posts (e as categorias deles) que chegaram por fora do editor (Produção de Conteúdo)
+       * enquanto ele estava aberto: o servidor os manteve e o editor junta ao estado local.
+       */
+      mesclar?: { categories: Category[]; posts: Post[] };
+      ok: true;
+    }
+  | { error: string; ok: false };
 
 export type ChangeKind = "Editado" | "Novo" | "Oculto" | "Removido" | "Tema";
 

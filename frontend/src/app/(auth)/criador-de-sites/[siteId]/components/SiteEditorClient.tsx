@@ -2,7 +2,7 @@
 
 import type { Site } from "@repo/site-builder";
 import { type AiConfig, SiteEditor } from "@repo/site-builder/editor";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { resolveYoutubeChannel, saveSite, uploadSiteFont } from "../../actions";
 import {
   disconnectAi,
@@ -61,6 +61,7 @@ export const aiConfig: AiConfig = {
 
 export default function SiteEditorClient({
   banner,
+  carregadoEm,
   domain,
   initialSite,
   originalSite,
@@ -70,6 +71,8 @@ export default function SiteEditorClient({
 }: {
   /** Aviso fixo no topo do editor (ex.: editando site de cliente). */
   banner?: ReactNode;
+  /** Quando o servidor leu o site (ISO): posts do PDC que chegarem depois são preservados no salvar. */
+  carregadoEm: string;
   /** Endereço da última publicação; `null` se o site nunca foi publicado. */
   domain: string | null;
   initialSite: Site;
@@ -81,6 +84,7 @@ export default function SiteEditorClient({
   siteId: string;
 }) {
   const [setupOpen, setSetupOpen] = useState(false);
+  const abertoEm = useRef(carregadoEm);
   // Só consulta depois de publicado; a primeira publicação recarrega a página.
   const live = useSiteLive(siteId, !!domain);
 
@@ -98,7 +102,12 @@ export default function SiteEditorClient({
           if (!result.ok) throw new Error(result.error);
           return { id: result.id, name: result.name };
         }}
-        onSave={site => saveSite(siteId, site)}
+        onSave={async site => {
+          const result = await saveSite(siteId, site, abertoEm.current);
+          if (result.ok && result.sincronizadoEm)
+            abertoEm.current = result.sincronizadoEm;
+          return result;
+        }}
         onUploadFont={async file => {
           const data = new FormData();
           data.append("file", file);
