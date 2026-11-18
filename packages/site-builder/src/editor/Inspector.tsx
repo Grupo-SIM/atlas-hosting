@@ -48,6 +48,7 @@ import {
 import { themeVars } from "../renderer/styles.js";
 import { VARIANT_TOKENS } from "../renderer/variant-tokens.js";
 import { UPLOAD_LIMIT_MB, uploadSizeError } from "../upload-limits.js";
+import { ColorPickerButton } from "./ColorPicker.js";
 import { FieldInput, type ResolveChannel, Tip } from "./fields.js";
 import { formatTranslate, parseTranslate } from "./free-move.js";
 import { Icon, type IconName } from "./icons.js";
@@ -116,6 +117,11 @@ function Swatches({
 }) {
   return (
     <div className={big ? "sbe-sw big" : "sbe-sw"}>
+      <ColorPickerButton
+        onPick={onPick}
+        value={active ? resolve(active) : undefined}
+        variant="add"
+      />
       {colors.map(c => (
         <button
           className={[
@@ -358,12 +364,7 @@ function ColorRow({
         ) : null}
       </span>
       <div className="sbe-colorrow">
-        <input
-          aria-label={`${label}: escolher cor`}
-          onChange={e => onChange(e.target.value)}
-          type="color"
-          value={picker}
-        />
+        <ColorPickerButton onPick={onChange} value={picker} />
         <input
           className="sbe-mono"
           onChange={e => onChange(e.target.value)}
@@ -1133,15 +1134,10 @@ function VariantSettings({
             return (
               <div className="sbe-line" key={tok.key}>
                 <span>{tok.label}</span>
-                <input
-                  aria-label={tok.label}
-                  onChange={e =>
-                    onTheme({ [tok.key]: e.target.value }, tok.label)
-                  }
-                  style={{ height: 28, padding: 0, width: 36 }}
-                  type="color"
+                <ColorPickerButton
+                  onPick={c => onTheme({ [tok.key]: c }, tok.label)}
                   value={
-                    /^#[0-9a-f]{6}/i.test(shown) ? shown.slice(0, 7) : "#000000"
+                    /^#[0-9a-f]{6}/i.test(shown) ? shown.slice(0, 7) : undefined
                   }
                 />
                 <input

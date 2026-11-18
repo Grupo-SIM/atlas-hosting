@@ -17,6 +17,7 @@ import {
 } from "../upload-limits.js";
 import { AdPreviewDialog } from "./AdPreviewDialog.js";
 import { ratioLabel } from "./ad-crop.js";
+import { ColorPickerButton } from "./ColorPicker.js";
 import { Icon } from "./icons.js";
 
 /** Confere o canal no YouTube e devolve o ID `UC…` e o nome. Lança `Error` com mensagem para a pessoa. */
@@ -215,11 +216,16 @@ export function FieldInput({
           ) : null}
         </select>
       ) : field.kind === "color" ? (
-        <input
-          onChange={e => onChange(e.target.value)}
-          type="color"
-          value={str || "#000000"}
-        />
+        <div className="sbe-colorrow">
+          <ColorPickerButton onPick={onChange} value={str} />
+          <input
+            className="sbe-mono"
+            onChange={e => onChange(e.target.value)}
+            placeholder="#000000"
+            type="text"
+            value={str}
+          />
+        </div>
       ) : field.kind === "number" ? (
         <input
           onChange={e => onChange(Number(e.target.value))}

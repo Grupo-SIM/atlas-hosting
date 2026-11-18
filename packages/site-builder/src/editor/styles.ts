@@ -89,6 +89,21 @@ export const editorCss = `
 .sbe-mediabox .w{left:-7px}
 .sbe-mediabox .e{right:-7px}
 .sbe-mediabox .s{left:50%;bottom:-7px;width:30px;height:10px;margin-left:-15px;cursor:ns-resize}
+.sbp{display:flex;flex-direction:column;gap:10px;width:208px}
+.sbp-box{position:relative;height:140px;border-radius:10px;cursor:crosshair;touch-action:none;background-image:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent)}
+.sbp-hue{position:relative;height:14px;border-radius:999px;cursor:pointer;touch-action:none;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.sbp-dot{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.35);pointer-events:none}
+.sbp-hue .sbp-dot{top:50%}
+.sbp-row{display:flex;align-items:center;gap:8px}
+.sbp-hex{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:34px;padding:0 8px;border:1px solid var(--field);border-radius:8px;background:#fff}
+.sbp-hex i{flex:none;width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.sbe .sbp-hex input{flex:1;min-width:0;width:auto;height:30px;padding:0;border:0;border-radius:0;background:transparent;font-family:ui-monospace,monospace;text-transform:uppercase}
+.sbp-eye{flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:1px solid var(--field);border-radius:8px;background:#fff;color:var(--ink)}
+.sbp-wrap{display:inline-flex}
+.sbp-pop{position:fixed;z-index:80;padding:12px;background:#fff;border:1px solid var(--field);border-radius:14px;box-shadow:0 16px 40px rgba(30,28,24,.24)}
+.sbp-add{flex:none;display:flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;border:0;border-radius:50%;color:#fff;background:conic-gradient(#f43f5e,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#f43f5e);box-shadow:0 0 0 2px #fff inset}
+.sbp-add svg{color:#111;background:#fff;border-radius:50%;padding:1px}
+.sbp-square{flex:none;width:28px;height:28px;padding:0;border:0;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
 .sbq-bar{position:fixed;z-index:30;left:-9999px;top:0;display:flex;align-items:center;flex-wrap:wrap;gap:6px;max-width:calc(100vw - 24px);padding:6px 8px;background:#fff;border:1px solid var(--field);border-radius:12px;box-shadow:0 8px 24px rgba(30,28,24,.16);font-size:12px}
 .sbq-menu{position:relative}
 .sbq-btn{display:flex;align-items:center;gap:6px;height:30px;padding:0 9px;border:1px solid var(--field);border-radius:8px;background:#fff;color:var(--ink);font-size:12px;white-space:nowrap}
@@ -99,8 +114,8 @@ export const editorCss = `
 .sbq-media{width:270px}
 .sbq-colors b{font-size:11px;font-weight:500;color:var(--mute)}
 .sbq-sw{display:flex;flex-wrap:wrap;gap:6px}
-.sbq-sw button{width:22px;height:22px;padding:0;border:1px solid rgba(0,0,0,.18);border-radius:6px}
-.sbq-sw .none{background:linear-gradient(135deg,#fff 45%,#f43f5e 45% 55%,#fff 55%)}
+.sbq-sw>button{width:22px;height:22px;padding:0;border:1px solid rgba(0,0,0,.18);border-radius:6px}
+.sbq-sw>.none{background:linear-gradient(135deg,#fff 45%,#f43f5e 45% 55%,#fff 55%)}
 .sbq-custom{display:flex;align-items:center;gap:6px}
 .sbq-custom input[type=color]{flex:none;width:34px;height:30px;padding:0;border:1px solid var(--field);border-radius:8px;background:#fff}
 .sbe .sbq-custom input[type=text]{flex:1;min-width:0;height:30px}
@@ -182,10 +197,10 @@ export const editorCss = `
 .sbe-colorrow .sbe-mono{flex:1;min-width:0}
 .sbe-link{margin-left:8px;padding:0;border:0;background:none;color:#6a5ad8;font-size:12px;cursor:pointer;text-decoration:underline}
 .sbe-sw{display:flex;flex-wrap:wrap;gap:6px}
-.sbe-sw button{width:22px;height:22px;border:0;padding:0;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
-.sbe-sw.big button{width:28px;height:28px}
-.sbe-sw button.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
-.sbe-sw button.none{background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 50%/8px 8px}
+.sbe-sw>button{width:22px;height:22px;border:0;padding:0;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.sbe-sw.big>button{width:28px;height:28px}
+.sbe-sw>button.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
+.sbe-sw>button.none{background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 50%/8px 8px}
 .sbe-toggle{width:34px;height:20px;border-radius:999px;border:0;padding:2px;background:#dcd9d1;display:flex;justify-content:flex-start}
 .sbe-toggle.on{background:var(--ink);justify-content:flex-end}
 .sbe-toggle span{width:16px;height:16px;border-radius:50%;background:#fff;display:block}

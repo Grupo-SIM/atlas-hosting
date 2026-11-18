@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import type { FieldDef } from "../blocks/types.js";
 import { fontStack, SITE_FONTS } from "../renderer/fonts.js";
 import { uploadSizeError } from "../upload-limits.js";
+import { ColorPickerButton } from "./ColorPicker.js";
 import { FieldInput } from "./fields.js";
 import { Icon } from "./icons.js";
 import { LAYER_OPS, type LayerOp } from "./layer-order.js";
@@ -141,6 +142,14 @@ function ColorMenu({
           ) : null}
           <b>Cores do site</b>
           <div className="sbq-sw">
+            <ColorPickerButton
+              onPick={c => {
+                setHex(c);
+                pick(c);
+              }}
+              value={value}
+              variant="add"
+            />
             {PALETTE.map(c => (
               <button
                 key={c}
@@ -161,14 +170,12 @@ function ColorMenu({
           </div>
           <b>Escolher outra cor</b>
           <div className="sbq-custom">
-            <input
-              aria-label="Escolher a cor"
-              onChange={e => {
-                setHex(e.target.value);
-                pick(e.target.value);
+            <ColorPickerButton
+              onPick={c => {
+                setHex(c);
+                pick(c);
               }}
-              type="color"
-              value={HEX.test(hex) ? hex : "#000000"}
+              value={HEX.test(hex) ? hex : value}
             />
             <input
               onChange={e => setHex(e.target.value)}
