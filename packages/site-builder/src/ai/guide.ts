@@ -38,7 +38,7 @@ Desktop · Tablet · Celular (alterna a largura do canvas; mostra largura em px 
 ### Aba Páginas
 Quatro seções:
 - **Páginas**: nova página, e para cada uma título, endereço (slug), status (rascunho/publicado) e excluir. A home não pode ser excluída nem mudar de endereço.
-- **Posts**: novo post; título, slug, categoria, resumo, imagem de capa, data de publicação, status. Posts com a marca **PDC** na lista vieram da Produção de Conteúdo (os agentes publicam direto no site depois da aprovação no PDC); dá para editar como qualquer post, mas se o PDC reenviar o mesmo post a versão dele substitui a edição.
+- **Posts**: novo post; título, slug, categoria, resumo, imagem de capa, data de publicação, status. Alguns posts vêm da Produção de Conteúdo (os agentes publicam direto no site depois da aprovação no PDC); dá para editar como qualquer post, mas se o PDC reenviar o mesmo post a versão dele substitui a edição.
 - **Categorias**: criar, renomear, excluir (posts da categoria ficam sem categoria).
 - **Menu**: links do menu do site (nome + endereço, com subitens). Vale para cabeçalho e rodapé. **Clicar num link do menu** (cabeçalho ou rodapé) abre o painel "Menu do site" com **aquele link em primeiro lugar** (nome e endereço editáveis) e os demais recolhidos. No **Rodapé**, o botão **"Personalizar os links do rodapé"** cria uma lista só do rodapé (campo "Links do menu só do rodapé"): daí cada link do rodapé tem nome e endereço próprios, sem mexer no cabeçalho. O rodapé também tem "Links de baixo" (ao lado do copyright; vazio = Termos de Uso e Política de Privacidade do site), "Links extras no menu do rodapé" e "Redes sociais", cada um com seu endereço.
 ### Aba IA
