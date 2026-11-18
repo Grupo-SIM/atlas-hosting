@@ -219,6 +219,11 @@ export const editorCss = `
 .sbe-devstatus{display:block;margin-top:2px;font-weight:600}
 .sbe-devactions{display:flex;gap:8px;flex-shrink:0}
 .sbe-devactions button:disabled{opacity:.45;cursor:not-allowed}
+.sbe-leftfoot{flex:none;padding:10px;border-top:1px solid var(--line2);background:var(--panel)}
+.sbe-leftfoot .sbe-btn{width:100%}
+.sbe-postdialog{width:480px}
+.sbe-check{display:flex;align-items:center;gap:8px;font-size:12px;color:#55524c;cursor:pointer}
+.sbe-check input{width:auto;flex:none}
 .sbe-modal{position:fixed;inset:0;background:rgba(29,28,26,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
 .sbe-confirm{width:420px;max-height:none}
 .sbe-adprev{width:760px;max-height:calc(100vh - 32px)}

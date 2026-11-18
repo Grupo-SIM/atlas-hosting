@@ -42,6 +42,7 @@ import { Icon } from "./icons.js";
 import { inlineTarget } from "./inline-text.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { type LiveColors, readLiveColors } from "./live-colors.js";
+import { PostModal } from "./PostModal.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
 import {
   applyReplica,
@@ -51,6 +52,7 @@ import {
   replicaTargets,
 } from "./replicate.js";
 import {
+  createPostFromForm,
   duplicatePost,
   renameCategory,
   setMenu,
@@ -469,6 +471,7 @@ export function SiteEditor({
   const [aiOpened, setAiOpened] = useState(false);
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  const [newPost, setNewPost] = useState(false);
   // Largura dos painéis (arrastando a borda). Sem valor, vale a largura padrão do CSS.
   const [panelW, setPanelW] = useState<{ left?: number; right?: number }>({});
   const panelWRef = useRef(panelW);
@@ -2051,6 +2054,18 @@ export function SiteEditor({
               </div>
             </>
           )}
+
+          <div className="sbe-leftfoot">
+            <button
+              className="sbe-btn round"
+              onClick={() => setNewPost(true)}
+              title="Criar um post: escolha a categoria e o que ele mostra"
+              type="button"
+            >
+              <Icon name="plus" size={14} />
+              Novo post
+            </button>
+          </div>
         </aside>
       ) : null}
 
@@ -2368,6 +2383,29 @@ export function SiteEditor({
 
         {confirm ? (
           <ConfirmDialog onClose={() => setConfirm(null)} request={confirm} />
+        ) : null}
+
+        {newPost ? (
+          <PostModal
+            initialCategoryId={currentPost?.categoryId}
+            onClose={() => setNewPost(false)}
+            onCreate={form => {
+              const res = createPostFromForm(site, form);
+              edit(res.site, {
+                kind: "Novo",
+                label: `Post · ${res.post.title}`,
+              });
+              setNewPost(false);
+              goTo(`/${res.post.slug}/`);
+              flash(
+                res.post.status === "published"
+                  ? "Post criado e publicado no site."
+                  : "Post criado como rascunho."
+              );
+            }}
+            onUploadImage={onUploadImage}
+            site={site}
+          />
         ) : null}
 
         {review && publish ? (
