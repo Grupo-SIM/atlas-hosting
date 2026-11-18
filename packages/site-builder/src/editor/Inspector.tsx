@@ -48,7 +48,7 @@ import {
 import { themeVars } from "../renderer/styles.js";
 import { VARIANT_TOKENS } from "../renderer/variant-tokens.js";
 import { UPLOAD_LIMIT_MB, uploadSizeError } from "../upload-limits.js";
-import { FieldInput, type ResolveChannel } from "./fields.js";
+import { FieldInput, type ResolveChannel, Tip } from "./fields.js";
 import { formatTranslate, parseTranslate } from "./free-move.js";
 import { Icon, type IconName } from "./icons.js";
 import type { LiveColors } from "./live-colors.js";
@@ -410,6 +410,35 @@ function Section({
   );
 }
 
+/** Linha que abre e fecha: mostra o nome do campo e, recolhida, um resumo do valor. */
+function Fold({
+  children,
+  defaultOpen = false,
+  label,
+  preview,
+}: {
+  children: ReactNode;
+  defaultOpen?: boolean;
+  label: string;
+  preview?: string;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className={open ? "sbe-fold open" : "sbe-fold"}>
+      <button
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+        type="button"
+      >
+        <b>{label}</b>
+        {open ? null : <span>{preview}</span>}
+        <Icon name={open ? "chevron-down" : "chevron-right"} size={13} />
+      </button>
+      {open ? <div className="sbe-fold-body">{children}</div> : null}
+    </div>
+  );
+}
+
 /** Campo (ou item de lista) do bloco que mostra o texto/imagem do elemento clicado. */
 type FieldMatch =
   | { field: FieldDef; kind: "field" }
@@ -701,7 +730,7 @@ function RepeatCount({
   return (
     <div className="sbe-list-item">
       <p className="sbe-hint">
-        Este item se repete — {field.label}: {value}
+        {field.label}: <b>{value}</b>
       </p>
       <div className="sbe-row">
         <button onClick={onAdd} type="button">
@@ -715,11 +744,11 @@ function RepeatCount({
           − Um a menos
         </button>
       </div>
-      <p className="sbe-hint">
+      <Tip label="Como funciona">
         {post
           ? `Cria uma cópia de “${post.title}” logo abaixo. A cópia é um post novo: edite título, imagem e resumo aqui no painel e o texto completo no próprio post.`
           : "O novo item mostra o próximo conteúdo do site. Se não aparecer, não há mais."}
-      </p>
+      </Tip>
     </div>
   );
 }
@@ -829,6 +858,7 @@ function AnchorInput({
  */
 function SiteItemFields({
   category,
+  focus,
   onCategory,
   onOpenPath,
   onPost,
@@ -837,6 +867,8 @@ function SiteItemFields({
   site,
 }: {
   category?: Category;
+  /** Texto ou endereço do item clicado: abre a linha do campo que o guarda. */
+  focus?: string;
   onCategory: (id: string, name: string) => void;
   onOpenPath: (path: string) => void;
   onPost: (id: string, patch: Partial<Post>, what: string) => void;
@@ -844,61 +876,97 @@ function SiteItemFields({
   post?: Post;
   site: Site;
 }) {
+  const hit = (v: string | null | undefined) =>
+    Boolean(focus && v && norm(v) === norm(focus));
+  const bare = (key: string, kind: "select" | "text" | "textarea" | "image") =>
+    ({ key, kind, label: "" }) as const;
+  const tail = (url: string | null | undefined) =>
+    url ? (url.split("/").pop() ?? url) : "sem imagem";
   return (
     <>
       {post ? (
         <div className="sbe-list-item">
-          <p className="sbe-hint">
-            Post: o texto e a imagem deste item vêm do post. Editar aqui muda em
-            todos os lugares do site que mostram ele.
-          </p>
-          <FieldInput
-            field={{ key: "title", kind: "text", label: "Título do post" }}
-            onChange={v => onPost(post.id, { title: String(v) }, "Título")}
-            value={post.title}
-          />
-          <FieldInput
-            field={{
-              key: "coverImage",
-              kind: "image",
-              label: "Imagem de capa",
-            }}
-            onChange={v =>
-              onPost(post.id, { coverImage: v ? String(v) : null }, "Capa")
+          <Tip label="Como funciona">
+            O texto e a imagem deste item vêm do post. Editar aqui muda em todos
+            os lugares do site que mostram ele.
+          </Tip>
+          <Fold
+            defaultOpen={
+              hit(post.title) ||
+              !(hit(post.coverImage) || hit(post.excerpt) || hit(post.title))
             }
-            onUpload={onUpload}
-            value={post.coverImage ?? ""}
-          />
-          <FieldInput
-            field={{ key: "excerpt", kind: "textarea", label: "Resumo" }}
-            onChange={v => onPost(post.id, { excerpt: String(v) }, "Resumo")}
-            value={post.excerpt}
-          />
-          <FieldInput
-            field={{
-              key: "categoryId",
-              kind: "select",
-              label: "Categoria",
-              options: [
-                { label: "Sem categoria", value: "" },
-                ...site.categories.map(c => ({ label: c.name, value: c.id })),
-              ],
-            }}
-            onChange={v =>
-              onPost(post.id, { categoryId: v ? String(v) : null }, "Categoria")
-            }
-            value={post.categoryId ?? ""}
-          />
-          <label className="sbe-field">
-            <span>Data de publicação</span>
-            <input
-              onChange={e =>
-                onPost(post.id, { publishedAt: e.target.value || null }, "Data")
-              }
-              type="date"
-              value={post.publishedAt ?? ""}
+            label="Título"
+            preview={post.title}
+          >
+            <FieldInput
+              field={bare("title", "text")}
+              onChange={v => onPost(post.id, { title: String(v) }, "Título")}
+              value={post.title}
             />
-          </label>
+          </Fold>
+          <Fold
+            defaultOpen={hit(post.coverImage)}
+            label="Imagem de capa"
+            preview={tail(post.coverImage)}
+          >
+            <FieldInput
+              field={bare("coverImage", "image")}
+              onChange={v =>
+                onPost(post.id, { coverImage: v ? String(v) : null }, "Capa")
+              }
+              onUpload={onUpload}
+              value={post.coverImage ?? ""}
+            />
+          </Fold>
+          <Fold
+            defaultOpen={hit(post.excerpt)}
+            label="Resumo"
+            preview={post.excerpt}
+          >
+            <FieldInput
+              field={bare("excerpt", "textarea")}
+              onChange={v => onPost(post.id, { excerpt: String(v) }, "Resumo")}
+              value={post.excerpt}
+            />
+          </Fold>
+          <Fold
+            label="Categoria e data"
+            preview={
+              site.categories.find(c => c.id === post.categoryId)?.name ??
+              "Sem categoria"
+            }
+          >
+            <FieldInput
+              field={{
+                ...bare("categoryId", "select"),
+                options: [
+                  { label: "Sem categoria", value: "" },
+                  ...site.categories.map(c => ({ label: c.name, value: c.id })),
+                ],
+              }}
+              onChange={v =>
+                onPost(
+                  post.id,
+                  { categoryId: v ? String(v) : null },
+                  "Categoria"
+                )
+              }
+              value={post.categoryId ?? ""}
+            />
+            <label className="sbe-field">
+              <input
+                onChange={e =>
+                  onPost(
+                    post.id,
+                    { publishedAt: e.target.value || null },
+                    "Data"
+                  )
+                }
+                type="date"
+                value={post.publishedAt ?? ""}
+              />
+            </label>
+          </Fold>
           <div className="sbe-row">
             <button onClick={() => onOpenPath(postPath(post))} type="button">
               Abrir o post inteiro
@@ -908,10 +976,9 @@ function SiteItemFields({
       ) : null}
       {category ? (
         <div className="sbe-list-item">
-          <p className="sbe-hint">
-            Categoria: o nome vale para o menu, os cards e a página da
-            categoria.
-          </p>
+          <Tip label="Como funciona">
+            O nome vale para o menu, os cards e a página da categoria.
+          </Tip>
           <FieldInput
             field={{ key: "name", kind: "text", label: "Nome da categoria" }}
             onChange={v => onCategory(category.id, String(v))}
@@ -1599,10 +1666,9 @@ export function Inspector({
             ) : null}
             {postBlockHit ? (
               <div className="sbe-list-item">
-                <p className="sbe-hint">
-                  Texto do post: este trecho faz parte do conteúdo do post
-                  aberto.
-                </p>
+                <Tip label="Como funciona">
+                  Este trecho faz parte do conteúdo do post aberto.
+                </Tip>
                 {postBlockHit.matches.map(m =>
                   m.kind === "field" ? (
                     <FieldInput
@@ -1669,6 +1735,8 @@ export function Inspector({
             {siteItem.post || siteItem.category ? (
               <SiteItemFields
                 category={siteItem.category}
+                focus={focusHint?.value}
+                key={`${siteItem.post?.id ?? siteItem.category?.id}-${focusHint?.n}`}
                 onCategory={onCategory}
                 onOpenPath={onOpenPath}
                 onPost={onPost}

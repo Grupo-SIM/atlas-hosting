@@ -108,6 +108,22 @@ export const editorCss = `
 .sbe-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;height:30px;padding:0 10px!important}
 .sbe-more{margin-top:4px}
 .sbe-more>summary{cursor:pointer;font-size:12px;color:#55524c;padding:6px 0}
+.sbe-tip{font-size:11px;color:var(--mute)}
+.sbe-tip summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:4px;color:var(--mute)}
+.sbe-tip summary::-webkit-details-marker{display:none}
+.sbe-tip summary::before{content:"?";display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--soft);font-size:9px;font-weight:600}
+.sbe-tip summary:hover{color:var(--ink)}
+.sbe-tip>div{margin-top:4px;line-height:1.45}
+.sbe-tip b{color:var(--ink);font-weight:500}
+.sbe-fold{border-top:1px solid var(--line2)}
+.sbe-fold:first-of-type{border-top:0}
+.sbe-fold>button{width:100%;display:flex;align-items:center;gap:8px;padding:7px 0;background:transparent!important;border:0!important;border-radius:0!important;font-size:12px;color:var(--ink);text-align:left}
+.sbe-fold>button b{flex:none;font-weight:500}
+.sbe-fold>button span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mute);text-align:right}
+.sbe-fold>button svg{margin-left:auto;color:var(--soft)}
+.sbe-fold>button span+svg{margin-left:0}
+.sbe-fold-body{display:flex;flex-direction:column;gap:6px;padding:0 0 8px}
+.sbe-field>span:empty{display:none}
 .sbe-spec{display:block;margin-top:2px;font-size:11px;line-height:1.45;color:var(--mute)}
 .sbe-spec b{color:var(--ink);font-weight:500}
 .sbe-colorrow{display:flex;align-items:center;gap:8px}
@@ -182,7 +198,7 @@ export const editorCss = `
 .sbe-drop small{color:var(--mute);font-size:12px}
 .sbe-thumb{width:100%;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block}
 .sbe-imgdrop{position:relative;display:block;width:100%;padding:0;border:1px solid var(--field);border-radius:12px;overflow:hidden;background:#f5f4f0;cursor:pointer}
-.sbe-imgdrop .sbe-thumb{display:block;width:100%;max-height:180px;object-fit:cover;border:0;border-radius:0}
+.sbe-imgdrop .sbe-thumb{display:block;width:100%;max-height:120px;object-fit:cover;border:0;border-radius:0}
 .sbe-imgdrop .cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(29,28,26,.55);color:#fff;font-size:12.5px;opacity:0;transition:opacity .12s}
 .sbe-imgdrop:hover .cover,.sbe-imgdrop:focus-visible .cover,.sbe-imgdrop.over .cover{opacity:1}
 

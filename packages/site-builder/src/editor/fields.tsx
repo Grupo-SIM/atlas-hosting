@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import type { AdSpec } from "../blocks/ads.js";
 import type { FieldDef } from "../blocks/types.js";
 import {
@@ -27,6 +27,24 @@ export type ResolveChannel = (
 type Values = Record<string, unknown>;
 
 /** Campo genérico do painel de propriedades, dirigido pelo `FieldDef` do bloco. */
+/** Explicação recolhida: o painel mostra só o título e o campo; quem precisa do detalhe abre. */
+export function Tip({
+  children,
+  label,
+  open,
+}: {
+  children: ReactNode;
+  label: string;
+  open?: boolean;
+}) {
+  return (
+    <details className="sbe-tip" open={open}>
+      <summary>{label}</summary>
+      <div>{children}</div>
+    </details>
+  );
+}
+
 export function FieldInput({
   adSpec,
   field,
@@ -378,7 +396,7 @@ function ImageField({
             ref={picker}
             type="file"
           />
-          <small className="sbe-spec">
+          <Tip label="Tamanho e formatos" open={Boolean(adSpec)}>
             {adSpec ? (
               <>
                 Tamanho ideal:{" "}
@@ -394,7 +412,7 @@ function ImageField({
             {media
               ? `Imagens até ${UPLOAD_LIMIT_MB.image} MB (${IMAGE_FORMATS}) · vídeos até ${UPLOAD_LIMIT_MB.video} MB (${VIDEO_FORMATS}).`
               : `Até ${UPLOAD_LIMIT_MB.image} MB · ${IMAGE_FORMATS}.`}
-          </small>
+          </Tip>
         </>
       ) : null}
       <input
