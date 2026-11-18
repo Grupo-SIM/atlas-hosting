@@ -90,8 +90,10 @@ function randomPassword(): string {
   return Array.from(bytes, n => alphabet[n % alphabet.length]).join("");
 }
 
-function summary(row: TeamUserRow): string {
-  const hasTemplates = row.permissions.some(p => p.area === "admin_templates");
+function summary(row: TeamUserRow, master: boolean): string {
+  // O que só o master concede (editar templates) só aparece para ele: para os demais a escolha já foi feita.
+  const hasTemplates =
+    master && row.permissions.some(p => p.area === "admin_templates");
   const templates = hasTemplates
     ? ` + Editar templates (${
         row.validation === "owner"
@@ -104,7 +106,9 @@ function summary(row: TeamUserRow): string {
   if (row.profile === "admin") {
     return `Todas as áreas, inclusive Usuários${templates}`;
   }
-  const n = row.permissions.length;
+  const n = row.permissions.filter(
+    p => master || !isMasterOnlyArea(p.area)
+  ).length;
   if (row.accessAll) {
     const extra = row.permissions.some(p => p.area === OUTSIDE_ALL_AREAS)
       ? " + Usuários"
@@ -146,6 +150,14 @@ function TeamUserDialog({
   );
   const [all, setAll] = useState(Boolean(user?.accessAll));
   const [selected, setSelected] = useState<Selected>(initialSelected);
+  // Áreas que só o master concede (Editar templates) e a validação de sites de clientes só aparecem na conta dele: nas
+  // demais contas a escolha já foi feita e não há o que mostrar nem o que enviar.
+  const visibleGroups = master
+    ? AREA_GROUPS
+    : AREA_GROUPS.map(g => ({
+        ...g,
+        areas: g.areas.filter(a => !isMasterOnlyArea(a.key)),
+      })).filter(g => g.areas.length > 0);
   const [validation, setValidation] = useState<ValidationMode>(
     user?.validation ?? "auto"
   );
@@ -217,6 +229,8 @@ function TeamUserDialog({
   const submit = () => {
     const permissions = GRANTABLE_AREAS.flatMap(a => {
       const masterOnly = isMasterOnlyArea(a.key);
+      // Quem não é o master não envia o que só o master concede: o servidor mantém o que a pessoa já tinha.
+      if (masterOnly && !master) return [];
       // Administrador e "todas as áreas" já cobrem o resto; o que só o master libera vai sempre explícito.
       if (profile === "admin" && !masterOnly) return [];
       if (all && a.key !== OUTSIDE_ALL_AREAS && !masterOnly) return [];
@@ -368,7 +382,7 @@ function TeamUserDialog({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            {AREA_GROUPS.map(group => {
+            {visibleGroups.map(group => {
               const keys = group.areas.filter(a => a.available).map(a => a.key);
               const marked = keys.filter(k => effective[k]).length;
               const groupLocked = keys.length === 0 || keys.every(locked);
@@ -580,7 +594,7 @@ export function TeamManager({
               </div>
               <Badge variant="secondary">{PROFILE_LABELS[row.profile]}</Badge>
               <span className="text-muted-foreground text-xs">
-                {summary(row)}
+                {summary(row, master)}
               </span>
               <div className="flex gap-1">
                 <Button
