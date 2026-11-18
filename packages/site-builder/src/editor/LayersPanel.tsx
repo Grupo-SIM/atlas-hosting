@@ -9,6 +9,7 @@ import type { BlockGroup } from "../blocks/types.js";
 import type { Block } from "../model/index.js";
 import type { ElementNode } from "./dom-tree.js";
 import { Icon } from "./icons.js";
+import type { LayerOp } from "./layer-order.js";
 import type { DropPlace, DropTarget } from "./tree.js";
 
 const GROUP_LABEL: Record<BlockGroup, string> = {
@@ -29,6 +30,8 @@ interface Props {
   getElements: (blockId: string) => ElementNode[];
   onAdd: (type: string) => void;
   onInsert: (type: string, target: DropTarget) => void;
+  /** Muda a camada (z-index) do elemento selecionado. */
+  onLayer?: (op: LayerOp) => void;
   onMove: (id: string, target: DropTarget) => void;
   onSelect: (id: string) => void;
   onSelectElement: (blockId: string, path: string, label: string) => void;
@@ -43,6 +46,7 @@ export function LayersPanel({
   getElements,
   onAdd,
   onInsert,
+  onLayer,
   onMove,
   onSelect,
   onSelectElement,
@@ -112,6 +116,30 @@ export function LayersPanel({
               <Icon name="box" size={11} />
             </span>
             <span className="name">{n.label}</span>
+            {onLayer && selectedId === blockId && elPath === n.path ? (
+              <span className="lay">
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onLayer("forward");
+                  }}
+                  title="Subir uma camada (para a frente)"
+                  type="button"
+                >
+                  <Icon name="arrow-up" size={11} />
+                </button>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onLayer("backward");
+                  }}
+                  title="Descer uma camada (para trás)"
+                  type="button"
+                >
+                  <Icon name="arrow-down" size={11} />
+                </button>
+              </span>
+            ) : null}
           </div>
           {n.children.length && !closed
             ? elementRows(blockId, n.children, depth + 1)

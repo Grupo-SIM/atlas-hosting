@@ -24,11 +24,13 @@ export const BLOCK_STYLE_KEYS = [
   "opacity",
   "order",
   "padding",
+  "position",
   "textAlign",
   "textDecoration",
   "textTransform",
   "translate",
   "width",
+  "zIndex",
 ] as const;
 
 export type BlockStyleKey = (typeof BLOCK_STYLE_KEYS)[number];
@@ -60,7 +62,7 @@ export const isValidStyle = (style: Record<string, string | number>) =>
 /** Caminho de um elemento dentro do bloco: posições `nth-child` separadas por ponto (ex.: "1.2.1"). */
 export const ELEMENT_PATH = /^\d{1,3}(\.\d{1,3}){0,11}$/;
 
-const UNITLESS = new Set(["opacity", "fontWeight", "order"]);
+const UNITLESS = new Set(["opacity", "fontWeight", "order", "zIndex"]);
 
 /** Cores "ao passar o mouse": viram uma regra `:hover`, nunca estilo inline. */
 export const HOVER_STYLE_PROPS = {

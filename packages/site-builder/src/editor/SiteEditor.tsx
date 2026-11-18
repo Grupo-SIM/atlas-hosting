@@ -43,6 +43,7 @@ import { type FocusHint, Inspector } from "./Inspector.js";
 import { Icon } from "./icons.js";
 import { inlineTarget } from "./inline-text.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
+import { type LayerOp, reorderLayers } from "./layer-order.js";
 import { type LiveColors, readLiveColors } from "./live-colors.js";
 import { PostModal } from "./PostModal.js";
 import {
@@ -525,6 +526,8 @@ export function SiteEditor({
   const selBoxRef = useRef<HTMLDivElement | null>(null);
   const mediaBoxRef = useRef<HTMLDivElement | null>(null);
   const quickRef = useRef<HTMLDivElement | null>(null);
+  // Onde foi o último clique no canvas: a lista "Neste ponto" mostra tudo o que está empilhado ali.
+  const lastPoint = useRef<{ x: number; y: number } | null>(null);
   const hoverBoxRef = useRef<HTMLDivElement | null>(null);
   const guideVRef = useRef<HTMLDivElement | null>(null);
   const guideHRef = useRef<HTMLDivElement | null>(null);
@@ -795,6 +798,8 @@ export function SiteEditor({
     const left = Math.max(c.left + 4, Math.min(r.left, c.right - bw - 4));
     bar.style.left = `${left}px`;
     bar.style.top = `${top}px`;
+    // As janelas abrem para cima quando há espaço, para não cobrir o que está sendo editado.
+    bar.dataset.pop = top - c.top >= 300 && top < r.top ? "up" : "down";
   };
 
   const paintSelection = () => {
@@ -1212,6 +1217,7 @@ export function SiteEditor({
     if (inlineEdit.current?.el.contains(e.target as Node)) return;
     // Alças da mídia: o clique nelas não troca a seleção.
     if ((e.target as HTMLElement).closest(".sbe-mediabox")) return;
+    lastPoint.current = { x: e.clientX, y: e.clientY };
     if (justDragged.current) {
       justDragged.current = false;
       e.preventDefault();
@@ -2086,6 +2092,91 @@ export function SiteEditor({
     );
   };
 
+  /**
+   * Muda a camada do elemento selecionado entre os que se sobrepõem a ele (irmãos dele; se nenhum encosta, os do
+   * nível de cima). As camadas viram `z-index` de 1 em diante, só nos que mudam de lugar.
+   */
+  const changeLayer = (op: LayerOp) => {
+    if (!(selected && elPath)) {
+      flash(
+        "Clique num elemento (texto, imagem ou caixa) para mudar a camada."
+      );
+      return;
+    }
+    const node = blockEl(selected.id);
+    const target = node ? elementAt(node, elPath) : null;
+    if (!(node && target)) return;
+    // Encostar de leve (sub-pixel, bordas que se tocam) não é sobrepor: exige uns pixels de área em comum.
+    const touches = (a: DOMRect, b: DOMRect) =>
+      b.width > 0 &&
+      b.height > 0 &&
+      Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 &&
+      Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2;
+    // A pegada do elemento na tela (já com o deslocamento): o que ela cobre, em qualquer nível, conta como sobreposto.
+    const footprint = target.getBoundingClientRect();
+    let level: HTMLElement | null = null;
+    let members: HTMLElement[] = [];
+    for (let el: HTMLElement | null = target; el && el !== node; ) {
+      const parent: HTMLElement | null = el.parentElement;
+      if (!parent) break;
+      const kids = Array.from(parent.children).filter(
+        (c): c is HTMLElement =>
+          c instanceof HTMLElement &&
+          getComputedStyle(c).display !== "none" &&
+          (c === el || touches(footprint, c.getBoundingClientRect()))
+      );
+      if (kids.length > 1) {
+        level = el;
+        members = kids;
+        break;
+      }
+      el = parent;
+    }
+    if (!level) {
+      flash(
+        "Nada se sobrepõe a este elemento, então não há camadas para trocar."
+      );
+      return;
+    }
+    const zOf = (el: HTMLElement) =>
+      Number.parseInt(getComputedStyle(el).zIndex, 10) || 0;
+    // De trás para a frente: pelo z-index e, empatando, pela ordem na página (quem vem depois fica por cima).
+    const sorted = members
+      .map((el, i) => ({ el, i, z: zOf(el) }))
+      .sort((a, b) => a.z - b.z || a.i - b.i)
+      .map(m => m.el);
+    const before = sorted.map(el => members.indexOf(el));
+    const order = reorderLayers(
+      before.map(String),
+      String(members.indexOf(level)),
+      op
+    ).map(Number);
+    if (order.join() === before.join()) {
+      flash(
+        op === "front" || op === "forward"
+          ? "Já está na frente."
+          : "Já está atrás."
+      );
+      return;
+    }
+    let next = siteRef.current;
+    order.forEach((idx, n) => {
+      const el = members[idx];
+      if (!el) return;
+      next = updateElementStyle(next, selected.id, pathWithin(el, node), {
+        zIndex: n + 1,
+        ...(getComputedStyle(el).position === "static"
+          ? { position: "relative" }
+          : {}),
+      });
+    });
+    edit(next, {
+      id: selected.id,
+      key: `layer:${selected.id}:${elPath}`,
+      label: `Camada · ${labelOf(selected.type)}`,
+    });
+  };
+
   // Barra de edição junto do que foi clicado: o que ela mostra depende do elemento (texto, caixa, imagem ou vídeo).
   const quick = (() => {
     if (!selected || framing || handActive || aiBusy) return null;
@@ -2152,9 +2243,40 @@ export function SiteEditor({
         };
       }
     }
+    // Tudo o que está empilhado no ponto do último clique, de cima para baixo.
+    const layers: {
+      blockId: string;
+      label: string;
+      on: boolean;
+      path: string;
+    }[] = [];
+    const pt = lastPoint.current;
+    if (pt && canvasRef.current) {
+      const seen = new Set<string>();
+      for (const hit of document.elementsFromPoint(pt.x, pt.y)) {
+        if (!(hit instanceof HTMLElement)) continue;
+        const owner = hit.closest<HTMLElement>("[data-block-id]");
+        const blockId = owner?.dataset.blockId;
+        if (!(owner && blockId && canvasRef.current.contains(owner))) continue;
+        const path = hit === owner ? "" : pathWithin(hit, owner);
+        const key = `${blockId}:${path}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const text = (hit.textContent ?? "").trim().slice(0, 22);
+        layers.push({
+          blockId,
+          label: path
+            ? `${itemName(hit)}${text ? ` · ${text}` : ""}`
+            : labelOf(owner.dataset.blockType ?? ""),
+          on: blockId === selected.id && path === elPath,
+          path,
+        });
+      }
+    }
     return {
       hasText: (el.textContent ?? "").trim().length > 0 && kind !== "image",
       kind,
+      layers: layers.slice(0, 12),
       live: canvasRef.current
         ? readLiveColors(el, canvasRef.current)
         : undefined,
@@ -2212,6 +2334,7 @@ export function SiteEditor({
               getElements={getElements}
               onAdd={addBlock}
               onInsert={insertAt}
+              onLayer={changeLayer}
               onMove={moveTo}
               onSelect={id => {
                 select(id);
@@ -2667,9 +2790,15 @@ export function SiteEditor({
             hasText={quick.hasText}
             key={`${selected?.id}:${elPath}:${focusHint.n}`}
             kind={quick.kind}
+            layers={quick.layers}
             liveColors={quick.live}
             liveText={quick.liveText}
             media={quick.media}
+            onLayer={changeLayer}
+            onPickLayer={(blockId, path, label) => {
+              selectElement(blockId, path, label);
+              revealInCanvas(blockId, path);
+            }}
             onStyle={applyStyle}
             resolve={quick.resolve}
             style={quick.style}
@@ -2813,6 +2942,7 @@ export function SiteEditor({
               label: `${what} · ${labelOf(selected.type)}`,
             })
           }
+          onLayer={changeLayer}
           onMenu={menu =>
             edit(setMenu(site, menu), {
               key: "menu-edit",

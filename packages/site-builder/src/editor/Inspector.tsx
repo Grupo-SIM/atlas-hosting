@@ -51,6 +51,7 @@ import { UPLOAD_LIMIT_MB, uploadSizeError } from "../upload-limits.js";
 import { FieldInput, type ResolveChannel, Tip } from "./fields.js";
 import { formatTranslate, parseTranslate } from "./free-move.js";
 import { Icon, type IconName } from "./icons.js";
+import { LAYER_OPS, type LayerOp } from "./layer-order.js";
 import type { LiveColors } from "./live-colors.js";
 import { resolveSiteItem } from "./site-items.js";
 
@@ -800,6 +801,8 @@ interface Props {
   onOpenPath: (path: string) => void;
   onAction: (action: "delete" | "down" | "duplicate" | "hide" | "up") => void;
   onAnchor: (anchor: string) => void;
+  /** Muda a camada (z-index) do elemento selecionado entre os que se sobrepõem a ele. */
+  onLayer?: (op: LayerOp) => void;
   onFx: (patch: Partial<Record<keyof Fx, Fx[keyof Fx]>>, what: string) => void;
   onProp: (key: string, value: unknown) => void;
   onSelect: (id: string) => void;
@@ -1182,6 +1185,7 @@ export function Inspector({
   focusHint,
   onAction,
   onAnchor,
+  onLayer,
   onFx,
   onMenu,
   onBlockProp,
@@ -1985,6 +1989,22 @@ export function Inspector({
               </div>
             );
           })}
+          {elPath && onLayer ? (
+            <div className="sbe-field">
+              <span>Camada (o que fica na frente de quê)</span>
+              <div className="sbe-tabs2">
+                {LAYER_OPS.map(o => (
+                  <button
+                    key={o.op}
+                    onClick={() => onLayer(o.op)}
+                    type="button"
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <p className="sbe-hint">
             Arraste o item no canvas (Shift = um eixo só, Alt = sem encaixe) ou
             use as setas do teclado (Shift = 10 px). Só vale em tela larga.

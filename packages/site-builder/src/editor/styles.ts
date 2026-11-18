@@ -95,6 +95,7 @@ export const editorCss = `
 .sbq-btn.on{background:var(--chip)}
 .sbq-dot{flex:none;width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.2);background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/8px 8px}
 .sbq-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:31;width:240px;display:flex;flex-direction:column;gap:8px;padding:10px;background:#fff;border:1px solid var(--field);border-radius:12px;box-shadow:0 12px 32px rgba(30,28,24,.2)}
+.sbq-bar[data-pop=up] .sbq-pop{top:auto;bottom:calc(100% + 6px)}
 .sbq-media{width:270px}
 .sbq-colors b{font-size:11px;font-weight:500;color:var(--mute)}
 .sbq-sw{display:flex;flex-wrap:wrap;gap:6px}
@@ -111,6 +112,18 @@ export const editorCss = `
 .sbe .sbq-size input[type=number]{width:46px;height:28px;padding:0;border:0;border-radius:0;text-align:center}
 .sbq-tog{width:30px;height:30px;border:1px solid var(--field);border-radius:8px;background:#fff;color:var(--ink)}
 .sbq-tog.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sbq-layers{width:250px}
+.sbq-layers b{font-size:11px;font-weight:500;color:var(--mute)}
+.sbq-ops{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sbq-ops button{padding:7px 6px;border:1px solid var(--field);border-radius:8px;background:#fff;color:var(--ink);font-size:12px}
+.sbq-ops button:hover{background:var(--chip)}
+.sbq-stack-list{display:flex;flex-direction:column;gap:2px;max-height:200px;overflow:auto}
+.sbq-stack-list button{padding:6px 8px;border:0;border-radius:6px;background:transparent;color:var(--ink);font-size:12px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbq-stack-list button:hover{background:var(--chip)}
+.sbq-stack-list button.on{background:var(--violet-bg);color:var(--violet)}
+.sbe-layer .lay{margin-left:auto;display:flex;gap:2px;flex:none}
+.sbe-layer .lay button{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;border:0;border-radius:5px;background:transparent;color:var(--mute)}
+.sbe-layer .lay button:hover{background:#fff;color:var(--ink)}
 .sbq-note{padding:0 6px;color:var(--mute)}
 .sbq-stack{display:flex;flex-direction:column;gap:8px}
 .sbq-file{display:flex;align-items:center;gap:6px;min-width:0}

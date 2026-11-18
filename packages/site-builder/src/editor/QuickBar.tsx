@@ -6,6 +6,7 @@ import { fontStack, SITE_FONTS } from "../renderer/fonts.js";
 import { uploadSizeError } from "../upload-limits.js";
 import { FieldInput } from "./fields.js";
 import { Icon } from "./icons.js";
+import { LAYER_OPS, type LayerOp } from "./layer-order.js";
 import type { LiveColors } from "./live-colors.js";
 import type { MediaMode } from "./quick-target.js";
 
@@ -405,6 +406,70 @@ function MediaMenu({ media }: { media: QuickMedia }) {
   );
 }
 
+export interface LayerHit {
+  blockId: string;
+  label: string;
+  on: boolean;
+  path: string;
+}
+
+/** Camadas: ver o que está empilhado onde se clicou (e escolher) e mandar o elemento para frente ou para trás. */
+function LayersMenu({
+  layers,
+  onLayer,
+  onPick,
+}: {
+  layers: LayerHit[];
+  onLayer: (op: LayerOp) => void;
+  onPick: (blockId: string, path: string, label: string) => void;
+}) {
+  const { open, ref, setOpen } = usePopover();
+  return (
+    <div className="sbq-menu" ref={ref}>
+      <button
+        aria-expanded={open}
+        className={open ? "sbq-btn on" : "sbq-btn"}
+        onClick={() => setOpen(o => !o)}
+        title="Camadas: o que está na frente e o que está atrás"
+        type="button"
+      >
+        <Icon name="layers" size={13} />
+        Camadas
+        <Icon name="chevron-down" size={12} />
+      </button>
+      {open ? (
+        <div className="sbq-pop sbq-layers">
+          <b>Ordem do elemento</b>
+          <div className="sbq-ops">
+            {LAYER_OPS.map(o => (
+              <button key={o.op} onClick={() => onLayer(o.op)} type="button">
+                {o.label}
+              </button>
+            ))}
+          </div>
+          {layers.length > 0 ? (
+            <>
+              <b>Neste ponto (de cima para baixo)</b>
+              <div className="sbq-stack-list">
+                {layers.map(l => (
+                  <button
+                    className={l.on ? "on" : ""}
+                    key={`${l.blockId}:${l.path}`}
+                    onClick={() => onPick(l.blockId, l.path, l.label)}
+                    type="button"
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const Toggle = ({
   children,
   on,
@@ -436,9 +501,12 @@ export function QuickBar({
   customFonts,
   hasText,
   kind,
+  layers,
   liveColors,
   liveText,
   media,
+  onLayer,
+  onPickLayer,
   onStyle,
   resolve,
   style,
@@ -447,9 +515,12 @@ export function QuickBar({
   customFonts: { name: string; url: string }[];
   hasText: boolean;
   kind: QuickKind;
+  layers: LayerHit[];
   liveColors?: LiveColors;
   liveText?: LiveText;
   media?: QuickMedia;
+  onLayer: (op: LayerOp) => void;
+  onPickLayer: (blockId: string, path: string, label: string) => void;
   onStyle: (patch: Record<string, string | number>, what: string) => void;
   resolve: (color: string) => string;
   style: Record<string, string | number | undefined>;
@@ -595,6 +666,7 @@ export function QuickBar({
           />
         </>
       )}
+      <LayersMenu layers={layers} onLayer={onLayer} onPick={onPickLayer} />
     </div>
   );
 }
