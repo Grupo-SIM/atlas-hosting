@@ -39,7 +39,7 @@ import {
 } from "./free-move.js";
 import { type FocusHint, Inspector } from "./Inspector.js";
 import { Icon } from "./icons.js";
-import { inlineTextPatch } from "./inline-text.js";
+import { inlineTarget } from "./inline-text.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { type LiveColors, readLiveColors } from "./live-colors.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
@@ -1093,6 +1093,10 @@ export function SiteEditor({
       n: h.n + 1,
       ...hintOf(el, basePath, { x: e.clientX, y: e.clientY }),
     }));
+    // Clicar num texto já deixa escrever ali, com o cursor onde o clique caiu.
+    if (block && !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)) {
+      startInlineEdit(e, block, { caret: true, notify: false });
+    }
   };
 
   const showGuides = (gx?: number, gy?: number) => {
@@ -1511,30 +1515,41 @@ export function SiteEditor({
    */
   const startInlineEdit = (
     e: MouseEvent<HTMLDivElement>,
-    block: HTMLElement
+    block: HTMLElement,
+    opts: { caret: boolean; notify: boolean }
   ) => {
     const blockId = block.dataset.blockId;
     const el = textLeaf(e.target as HTMLElement, block);
     const found = blockId ? findBlock(siteRef.current, blockId) : undefined;
     const def = found ? getBlockDefinition(found.type) : undefined;
     if (!(blockId && el && found && def)) return;
+    // Botões, campos de formulário e a busca têm o próprio comportamento com o teclado.
+    if (el.closest("button,input,select,textarea,.sb-header-search")) return;
     const node = el.firstChild as Text;
     const original = node.data;
-    const hint = hintOf(el, basePath, { x: e.clientX, y: e.clientY });
-    if (
-      !inlineTextPatch(
-        def.fields,
-        found.props,
-        def.defaults,
-        { n: 0, ...hint },
-        original,
-        original
-      )
-    ) {
-      e.preventDefault();
-      flash(
-        "Esse texto tem formatação ou aparece em mais de um lugar. Edite pelo painel da direita."
-      );
+    const hint = {
+      n: 0,
+      ...hintOf(el, basePath, { x: e.clientX, y: e.clientY }),
+    };
+    const post = route.kind === "post" ? route.post : undefined;
+    const target = (site: Site, props: Record<string, unknown>, text: string) =>
+      inlineTarget({
+        currentPost: post,
+        defaults: def.defaults,
+        fields: def.fields,
+        hint,
+        newText: text,
+        oldText: original,
+        props,
+        site,
+      });
+    if (!target(siteRef.current, found.props, original)) {
+      if (opts.notify) {
+        e.preventDefault();
+        flash(
+          "Esse texto tem formatação ou aparece em mais de um lugar. Edite pelo painel da direita."
+        );
+      }
       return;
     }
     e.preventDefault();
@@ -1542,10 +1557,23 @@ export function SiteEditor({
     el.contentEditable = "plaintext-only";
     if (el.contentEditable !== "plaintext-only") el.contentEditable = "true";
     el.setAttribute("data-sbe-editing", "");
-    el.focus();
+    // Onde caiu o clique (no meio da frase, por exemplo) fica o cursor; sem ponto, o texto vem todo selecionado.
     const doc = el.ownerDocument;
-    const range = doc.createRange();
-    range.selectNodeContents(el);
+    let caret: Range | null = null;
+    if (opts.caret) {
+      const at = doc.caretPositionFromPoint?.(e.clientX, e.clientY);
+      if (at && el.contains(at.offsetNode)) {
+        caret = doc.createRange();
+        caret.setStart(at.offsetNode, at.offset);
+      } else {
+        const r = doc.caretRangeFromPoint?.(e.clientX, e.clientY);
+        if (r && el.contains(r.startContainer)) caret = r;
+      }
+      caret?.collapse(true);
+    }
+    el.focus();
+    const range = caret ?? doc.createRange();
+    if (!caret) range.selectNodeContents(el);
     const sel = doc.defaultView?.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
@@ -1568,26 +1596,37 @@ export function SiteEditor({
         setFrameKey(k => k + 1);
       }
       if (!commit || !typed || typed === squash(original)) return;
-      const current = findBlock(siteRef.current, blockId);
-      const d = current ? getBlockDefinition(current.type) : undefined;
-      const patch =
-        current && d
-          ? inlineTextPatch(
-              d.fields,
-              current.props,
-              d.defaults,
-              { n: 0, ...hint },
-              original,
-              typed
-            )
-          : null;
-      if (!(current && patch)) return;
-      edit(updateBlockProps(siteRef.current, blockId, patch), {
-        id: blockId,
-        key: `inline:${blockId}:${squash(original)}`,
-        kind: "Editado",
-        label: `Texto · ${labelOf(current.type)}`,
-      });
+      const now = siteRef.current;
+      const current = findBlock(now, blockId);
+      const where = current ? target(now, current.props, typed) : null;
+      if (!(current && where)) return;
+      const key = `inline:${blockId}:${squash(original)}`;
+      if (where.kind === "block") {
+        edit(updateBlockProps(now, blockId, where.patch), {
+          id: blockId,
+          key,
+          kind: "Editado",
+          label: `Texto · ${labelOf(current.type)}`,
+        });
+      } else if (where.kind === "post") {
+        edit(updatePost(now, where.id, where.patch), {
+          key,
+          kind: "Editado",
+          label: `${where.what} do post · ${typed}`,
+        });
+      } else if (where.kind === "category") {
+        edit(renameCategory(now, where.id, where.name), {
+          key,
+          kind: "Editado",
+          label: `Categoria · ${typed}`,
+        });
+      } else {
+        edit(setMenu(now, where.menu), {
+          key,
+          kind: "Editado",
+          label: "Menu do site",
+        });
+      }
     };
     const onBlur = () => finish(true);
     const onKey = (ev: globalThis.KeyboardEvent) => {
@@ -1608,7 +1647,7 @@ export function SiteEditor({
     const block = target.closest<HTMLElement>("[data-block-id]");
     const el = block ? imageAt(block, e.clientX, e.clientY) : null;
     if (block && !el && !target.closest("img")) {
-      startInlineEdit(e, block);
+      startInlineEdit(e, block, { caret: false, notify: true });
       return;
     }
     if (!(block?.dataset.blockId && el)) return;

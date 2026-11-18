@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { inlineTextPatch } from "./inline-text.js";
+import { inlineTarget, inlineTextPatch } from "./inline-text.js";
 
 const fields = [
   { key: "title", kind: "text", label: "Título" },
@@ -75,5 +75,59 @@ describe("inlineTextPatch", () => {
 
   test("texto que nenhum campo guarda não é editado", () => {
     expect(patch({ title: "Outro" }, "Sumiu", "x")).toBe(null);
+  });
+});
+
+describe("inlineTarget — texto que vem do site, não do bloco", () => {
+  const site = {
+    categories: [{ id: "c1", name: "Economia", slug: "economia" }],
+    menu: [
+      { href: "/", label: "Início" },
+      { children: [{ href: "/x", label: "Sub" }], href: "/a", label: "Área" },
+    ],
+    posts: [
+      {
+        excerpt: "Resumo do post",
+        id: "p1",
+        slug: "pacote",
+        title: "Pacote de incentivos",
+      },
+    ],
+  } as never;
+  const run = (hint: Record<string, unknown>, oldText: string) =>
+    inlineTarget({
+      defaults: {},
+      fields: [],
+      hint: { n: 1, value: oldText, ...hint },
+      newText: "Novo",
+      oldText,
+      props: {},
+      site,
+    });
+
+  test("título do post vem do link do card", () => {
+    expect(run({ href: "/pacote/" }, "Pacote de incentivos")).toEqual({
+      id: "p1",
+      kind: "post",
+      patch: { title: "Novo" },
+      what: "Título",
+    });
+  });
+
+  test("resumo do post", () => {
+    expect(run({ href: "/pacote/" }, "Resumo do post")).toMatchObject({
+      patch: { excerpt: "Novo" },
+    });
+  });
+
+  test("item e subitem do menu", () => {
+    const a = run({}, "Início");
+    expect(a?.kind === "menu" && a.menu[0]?.label).toBe("Novo");
+    const b = run({}, "Sub");
+    expect(b?.kind === "menu" && b.menu[1]?.children?.[0]?.label).toBe("Novo");
+  });
+
+  test("texto que o site não guarda não é editado", () => {
+    expect(run({}, "Qualquer coisa")).toBe(null);
   });
 });

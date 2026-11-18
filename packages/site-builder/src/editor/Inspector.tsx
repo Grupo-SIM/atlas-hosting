@@ -1220,6 +1220,9 @@ export function Inspector({
   // Clique num item do site: leva o foco ao campo que guarda aquele texto/imagem/link.
   useEffect(() => {
     if (!focusHint?.value) return;
+    // Escrevendo direto no texto do canvas: o foco fica lá, não vai para o campo do painel.
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active.isContentEditable) return;
     const fields = root.current?.querySelectorAll<
       HTMLInputElement | HTMLTextAreaElement
     >(".sbe-field input[type=text], .sbe-field textarea");
