@@ -39,6 +39,7 @@ import {
 } from "./free-move.js";
 import { type FocusHint, Inspector } from "./Inspector.js";
 import { Icon } from "./icons.js";
+import { inlineTextPatch } from "./inline-text.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { type LiveColors, readLiveColors } from "./live-colors.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
@@ -237,6 +238,28 @@ function elementAt(block: HTMLElement, path: string): HTMLElement | null {
     cur = (cur?.children[Number(n) - 1] as HTMLElement | undefined) ?? null;
   }
   return cur;
+}
+
+/** Elemento que só tem texto (um nó de texto e nada mais): o único tipo que dá para editar direto no canvas. */
+function textLeaf(target: HTMLElement, block: HTMLElement): HTMLElement | null {
+  let el: HTMLElement | null = target;
+  for (let i = 0; el && el !== block && i < 3; i++, el = el.parentElement) {
+    if (
+      el.childNodes.length === 1 &&
+      el.firstChild?.nodeType === Node.TEXT_NODE &&
+      (el.textContent ?? "").trim()
+    )
+      return el;
+  }
+  return null;
+}
+
+const squash = (v: string) => v.replace(/[\s\u00a0]+/g, " ").trim();
+
+/** Edição de texto em andamento no canvas. */
+interface InlineEdit {
+  el: HTMLElement;
+  finish: (commit: boolean) => void;
 }
 
 /**
@@ -483,6 +506,13 @@ export function SiteEditor({
   const guideVRef = useRef<HTMLDivElement | null>(null);
   const guideHRef = useRef<HTMLDivElement | null>(null);
   const justDragged = useRef(false);
+  // Ferramentas como no Figma: seta (V) seleciona e edita; mãozinha (H, ou Espaço segurado) só movimenta a tela.
+  const [tool, setTool] = useState<"hand" | "select">("select");
+  const [spaceHeld, setSpaceHeld] = useState(false);
+  const handActive = tool === "hand" || spaceHeld;
+  const inlineEdit = useRef<InlineEdit | null>(null);
+  // Troca a chave do site no canvas para o React refazer o DOM quando a edição de texto o bagunçou.
+  const [frameKey, setFrameKey] = useState(0);
   /** Como arrastar no canvas: trocar de lugar (item ou bloco) ou deslocar livremente. */
   // Modo de arrastar fixo em "free" (movimento livre). O seletor Item | Bloco | Livre da barra está comentado mais
   // abaixo; para trazê-lo de volta, troque esta linha por `const [dragMode, setDragMode] = useState(...)` e descomente.
@@ -871,7 +901,18 @@ export function SiteEditor({
         return;
       }
       if (isTyping(e.target)) return;
-      if (mod && k === "z") {
+      const onControl =
+        e.target instanceof HTMLButtonElement ||
+        e.target instanceof HTMLAnchorElement;
+      if (e.code === "Space" && !(mod || onControl)) {
+        e.preventDefault();
+        setSpaceHeld(true);
+        return;
+      }
+      if (!(mod || e.altKey) && (k === "v" || k === "h")) {
+        setTool(k === "h" ? "hand" : "select");
+        clearHover();
+      } else if (mod && k === "z") {
         e.preventDefault();
         if (e.shiftKey) redo();
         else undo();
@@ -902,6 +943,20 @@ export function SiteEditor({
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  // Soltar o Espaço (ou perder o foco da janela) devolve a ferramenta que estava ativa.
+  useEffect(() => {
+    const release = () => setSpaceHeld(false);
+    const onUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") release();
+    };
+    window.addEventListener("keyup", onUp);
+    window.addEventListener("blur", release);
+    return () => {
+      window.removeEventListener("keyup", onUp);
+      window.removeEventListener("blur", release);
+    };
+  }, []);
+
   // Site que já estava com anúncios ligados: cria os blocos de anúncio que faltam (uma vez, ao abrir).
   useEffect(() => {
     const first = siteRef.current;
@@ -913,6 +968,12 @@ export function SiteEditor({
   }, []);
 
   const onCanvasClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (handActive) {
+      e.preventDefault();
+      return;
+    }
+    // Clique dentro do texto que está sendo editado só move o cursor.
+    if (inlineEdit.current?.el.contains(e.target as Node)) return;
     if (justDragged.current) {
       justDragged.current = false;
       e.preventDefault();
@@ -1371,10 +1432,113 @@ export function SiteEditor({
     return () => canvas.removeEventListener("wheel", onWheel);
   });
 
+  /**
+   * Duplo clique num texto: edita ali mesmo, no canvas. Enter ou clicar fora confirma; Esc cancela.
+   * Só quando dá para saber qual campo do bloco guarda o texto (ver `inlineTextPatch`); senão avisa e deixa
+   * a edição para o painel da direita, que já está aberto naquele campo.
+   */
+  const startInlineEdit = (
+    e: MouseEvent<HTMLDivElement>,
+    block: HTMLElement
+  ) => {
+    const blockId = block.dataset.blockId;
+    const el = textLeaf(e.target as HTMLElement, block);
+    const found = blockId ? findBlock(siteRef.current, blockId) : undefined;
+    const def = found ? getBlockDefinition(found.type) : undefined;
+    if (!(blockId && el && found && def)) return;
+    const node = el.firstChild as Text;
+    const original = node.data;
+    const hint = hintOf(el, basePath, { x: e.clientX, y: e.clientY });
+    if (
+      !inlineTextPatch(
+        def.fields,
+        found.props,
+        def.defaults,
+        { n: 0, ...hint },
+        original,
+        original
+      )
+    ) {
+      e.preventDefault();
+      flash(
+        "Esse texto tem formatação ou aparece em mais de um lugar. Edite pelo painel da direita."
+      );
+      return;
+    }
+    e.preventDefault();
+    clearHover();
+    el.contentEditable = "plaintext-only";
+    if (el.contentEditable !== "plaintext-only") el.contentEditable = "true";
+    el.setAttribute("data-sbe-editing", "");
+    el.focus();
+    const doc = el.ownerDocument;
+    const range = doc.createRange();
+    range.selectNodeContents(el);
+    const sel = doc.defaultView?.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+
+    let done = false;
+    const finish = (commit: boolean) => {
+      if (done) return;
+      done = true;
+      el.removeEventListener("blur", onBlur);
+      el.removeEventListener("keydown", onKey);
+      const typed = squash(el.textContent ?? "");
+      el.removeAttribute("contenteditable");
+      el.removeAttribute("data-sbe-editing");
+      inlineEdit.current = null;
+      // O React ainda guarda o nó de texto original: devolve o texto de antes para ele atualizar do jeito dele.
+      // Se a digitação trocou o nó (apagou tudo, colou HTML), o jeito seguro é refazer o canvas.
+      if (el.childNodes.length === 1 && el.firstChild === node) {
+        node.data = original;
+      } else {
+        setFrameKey(k => k + 1);
+      }
+      if (!commit || !typed || typed === squash(original)) return;
+      const current = findBlock(siteRef.current, blockId);
+      const d = current ? getBlockDefinition(current.type) : undefined;
+      const patch =
+        current && d
+          ? inlineTextPatch(
+              d.fields,
+              current.props,
+              d.defaults,
+              { n: 0, ...hint },
+              original,
+              typed
+            )
+          : null;
+      if (!(current && patch)) return;
+      edit(updateBlockProps(siteRef.current, blockId, patch), {
+        id: blockId,
+        key: `inline:${blockId}:${squash(original)}`,
+        kind: "Editado",
+        label: `Texto · ${labelOf(current.type)}`,
+      });
+    };
+    const onBlur = () => finish(true);
+    const onKey = (ev: globalThis.KeyboardEvent) => {
+      if (ev.key !== "Enter" && ev.key !== "Escape") return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      finish(ev.key === "Enter");
+      el.blur();
+    };
+    el.addEventListener("blur", onBlur);
+    el.addEventListener("keydown", onKey);
+    inlineEdit.current = { el, finish };
+  };
+
   const onCanvasDoubleClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (handActive || inlineEdit.current?.el.contains(e.target as Node)) return;
     const target = e.target as HTMLElement;
     const block = target.closest<HTMLElement>("[data-block-id]");
     const el = block ? imageAt(block, e.clientX, e.clientY) : null;
+    if (block && !el && !target.closest("img")) {
+      startInlineEdit(e, block);
+      return;
+    }
     if (!(block?.dataset.blockId && el)) return;
     const path = pathWithin(el, block);
     if (!path) return;
@@ -1383,6 +1547,31 @@ export function SiteEditor({
     setElPath(path);
     setElName("imagem");
     setFraming({ blockId: block.dataset.blockId, path });
+  };
+
+  /** Mãozinha: arrastar o canvas rola a tela na direção do arrasto. */
+  const startPan = (e: PointerEvent<HTMLDivElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    e.preventDefault();
+    const x = e.clientX;
+    const y = e.clientY;
+    const left = canvas.scrollLeft;
+    const top = canvas.scrollTop;
+    canvas.classList.add("panning");
+    const move = (ev: globalThis.PointerEvent) => {
+      canvas.scrollLeft = left - (ev.clientX - x);
+      canvas.scrollTop = top - (ev.clientY - y);
+    };
+    const up = () => {
+      canvas.classList.remove("panning");
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
   };
 
   const onMovePointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -1480,7 +1669,10 @@ export function SiteEditor({
     if (label) label.textContent = `${type ?? ""} › ${itemName(el)}`;
   };
   const onCanvasOver = (e: MouseEvent<HTMLDivElement>) => {
-    const el = pickElement(e.target as HTMLElement);
+    const el =
+      handActive || inlineEdit.current
+        ? null
+        : pickElement(e.target as HTMLElement);
     if (el === hoverRef.current) return;
     hoverRef.current = el;
     paintHover();
@@ -1767,6 +1959,32 @@ export function SiteEditor({
               {pageLabel}
             </strong>
           </div>
+          <div aria-label="Ferramentas" className="sbe-tools" role="toolbar">
+            <button
+              aria-pressed={!handActive}
+              className={handActive ? "sbe-ibtn" : "sbe-ibtn on"}
+              onClick={() => {
+                setTool("select");
+                setSpaceHeld(false);
+              }}
+              title="Selecionar (V) — clique para inspecionar, duplo clique no texto para editar"
+              type="button"
+            >
+              <Icon name="mouse-pointer-2" size={15} />
+            </button>
+            <button
+              aria-pressed={handActive}
+              className={handActive ? "sbe-ibtn on" : "sbe-ibtn"}
+              onClick={() => {
+                setTool("hand");
+                clearHover();
+              }}
+              title="Mão (H) — arraste para mover a tela. Segure Espaço para usar rapidinho"
+              type="button"
+            >
+              <Icon name="hand" size={15} />
+            </button>
+          </div>
           <div style={{ display: "flex", flexShrink: 0, gap: 2 }}>
             <button
               className="sbe-ibtn"
@@ -1885,7 +2103,9 @@ export function SiteEditor({
           <span className="sbe-spacer" />
           {wide ? (
             <span className="sbe-muted">
-              Clique para selecionar · Ctrl+clique abre links · Ctrl+Z desfaz
+              {handActive
+                ? "Arraste para mover a tela · V volta para a seta"
+                : "Clique seleciona · Duplo clique edita o texto · H mão · Ctrl+Z desfaz"}
             </span>
           ) : null}
           {originalSite ? (
@@ -1901,11 +2121,19 @@ export function SiteEditor({
 
         {/* biome-ignore lint/a11y/noStaticElementInteractions: o canvas recebe clique, hover e arrasto dos itens */}
         <div
-          className={framing ? "sbe-canvas framing" : "sbe-canvas"}
+          className={["sbe-canvas", framing && "framing", handActive && "hand"]
+            .filter(Boolean)
+            .join(" ")}
           onClickCapture={onCanvasClick}
           onDoubleClickCapture={onCanvasDoubleClick}
           onDragStart={e => e.preventDefault()}
           onPointerDownCapture={e => {
+            if (inlineEdit.current?.el.contains(e.target as Node)) return;
+            // Mãozinha (ou botão do meio do mouse): arrastar leva a tela, sem selecionar nem mover nada.
+            if (e.button === 1 || (handActive && e.button === 0)) {
+              startPan(e);
+              return;
+            }
             if (framing && e.button === 0) {
               const img = frameImg();
               if (
@@ -1951,6 +2179,7 @@ export function SiteEditor({
           >
             <SiteRenderer
               basePath={basePath}
+              key={frameKey}
               mode="edit"
               narrow={device !== "desktop"}
               path={path}

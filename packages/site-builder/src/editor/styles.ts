@@ -35,6 +35,8 @@ export const editorCss = `
 .sbe-where{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 .sbe-ibtn{width:30px;height:30px;flex-shrink:0;border:0;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--ink)}
 .sbe-ibtn:hover:not(:disabled){background:var(--chip)}
+.sbe-ibtn.on{background:var(--chip);box-shadow:inset 0 0 0 1px var(--field);color:var(--violet)}
+.sbe-tools{display:flex;flex-shrink:0;gap:2px;padding:2px;border-radius:10px;border:1px solid var(--field)}
 .sbe-pill{display:flex;flex-shrink:0;align-items:center;gap:7px;border:1px solid var(--field);background:#fff;border-radius:999px;padding:5px 12px;font-size:12px;color:var(--ink)}
 .sbe-pill i{width:7px;height:7px;border-radius:50%;background:#8b5cf6;display:block}
 .sbe-pill.saving i{background:#d99a1e}
@@ -67,6 +69,10 @@ export const editorCss = `
 .sbe-canvas img{-webkit-user-drag:none;user-select:none}
 .sbe-canvas iframe{pointer-events:none}
 .sbe-canvas.framing img{cursor:grab}
+.sbe-canvas.hand,.sbe-canvas.hand *{cursor:grab!important;user-select:none}
+.sbe-canvas.hand.panning,.sbe-canvas.hand.panning *{cursor:grabbing!important}
+.sbe-canvas [data-sbe-editing]{cursor:text;outline:2px solid var(--violet);outline-offset:2px;border-radius:2px;user-select:text;-webkit-user-select:text;min-width:1ch}
+.sbe-canvas.panning,.sbe-canvas.panning *{cursor:grabbing!important;user-select:none}
 .sbe-framebar{position:fixed;z-index:20;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;border-radius:999px;background:#1b1b1f;color:#fff;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .sbe-framebar button{border:0;border-radius:999px;padding:5px 11px;background:#d6f34a;color:#111;font-weight:700;font-size:12px;cursor:pointer}
 .sbe-guide{display:none;position:fixed;z-index:6;pointer-events:none;background:#ff3d8b}
