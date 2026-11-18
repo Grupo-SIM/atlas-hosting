@@ -52,7 +52,7 @@ import {
   replicaTargets,
 } from "./replicate.js";
 import {
-  createPostFromForm,
+  addPostToPage,
   duplicatePost,
   renameCategory,
   setMenu,
@@ -2387,20 +2387,24 @@ export function SiteEditor({
 
         {newPost ? (
           <PostModal
-            initialCategoryId={currentPost?.categoryId}
+            initialPageId={currentPage?.id}
             onClose={() => setNewPost(false)}
             onCreate={form => {
-              const res = createPostFromForm(site, form);
+              const res = addPostToPage(site, form);
+              const page = site.pages.find(p => p.id === form.pageId);
+              if (res.site === site || !page) return;
               edit(res.site, {
+                id: res.id,
                 kind: "Novo",
-                label: `Post · ${res.post.title}`,
+                label: `Post · ${page.title}`,
               });
               setNewPost(false);
-              goTo(`/${res.post.slug}/`);
+              goTo(page.slug ? `/${page.slug}/` : "/");
+              setSelectedId(res.id);
+              // A página troca na tela antes de o post existir no canvas: espera e leva o olhar até ele.
+              setTimeout(() => revealInCanvas(res.id), 250);
               flash(
-                res.post.status === "published"
-                  ? "Post criado e publicado no site."
-                  : "Post criado como rascunho."
+                "Post adicionado ao fim da página. Use as setas ou arraste para subir."
               );
             }}
             onUploadImage={onUploadImage}

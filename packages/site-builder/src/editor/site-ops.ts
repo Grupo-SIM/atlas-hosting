@@ -2,7 +2,7 @@ import { hasAdSlot } from "../blocks/ads.js";
 import { createBlock, newBlockId } from "../blocks/registry.js";
 import type { Page, Post, Site } from "../model/index.js";
 import { isSlugTaken, slugify } from "../renderer/routes.js";
-import { withNewIds } from "./tree.js";
+import { insertBlock, updateBlockProps, withNewIds } from "./tree.js";
 
 const clone = (site: Site): Site => structuredClone(site);
 
@@ -75,7 +75,7 @@ export function addPost(
   return { post, site: next };
 }
 
-/** Como o post se apresenta: texto, imagem e vídeo, em cada combinação que o modal "Novo post" oferece. */
+/** O que o post mostra: cada combinação de título, descrição, imagem e vídeo que o modal "Novo post" oferece. */
 export type PostFormat =
   | "image"
   | "text"
@@ -89,7 +89,7 @@ export const POST_FORMATS: {
   text: boolean;
   value: PostFormat;
 }[] = [
-  { label: "Só descrição", media: null, text: true, value: "text" },
+  { label: "Título + descrição", media: null, text: true, value: "text" },
   {
     label: "Descrição + imagem",
     media: "image",
@@ -102,39 +102,29 @@ export const POST_FORMATS: {
     text: true,
     value: "text-video",
   },
-  { label: "Só imagem", media: "image", text: false, value: "image" },
-  { label: "Só vídeo", media: "video", text: false, value: "video" },
+  { label: "Somente imagem", media: "image", text: false, value: "image" },
+  { label: "Somente vídeo", media: "video", text: false, value: "video" },
 ];
 
 export interface PostForm {
-  /** Categoria existente (a "aba" do post). */
-  categoryId: string | null;
   description: string;
   format: PostFormat;
   /** Imagem ou vídeo (arquivo ou link do YouTube, Instagram…). */
   media: string;
-  /** Nome de uma categoria nova, criada junto com o post (vale mais que `categoryId`). */
-  newCategory?: string;
-  /** Publicado já ou rascunho. */
-  publish: boolean;
+  /** Página (a aba) em que o post entra. */
+  pageId: string;
+  /** Opcional em todos os formatos. */
   title: string;
 }
 
-/** Texto curto para cards e listas: a descrição numa linha só, cortada em palavra inteira. */
-const summary = (text: string, max = 200) => {
-  const flat = text.replace(/\s+/g, " ").trim();
-  if (flat.length <= max) return flat;
-  const cut = flat.slice(0, max).replace(/\s+\S*$/, "");
-  return `${cut}…`;
-};
-
 /**
- * O que falta para criar o post (mensagem em português), ou `null` quando está tudo certo:
- * título sempre; descrição nos formatos com texto; imagem ou vídeo nos formatos com mídia.
+ * O que falta para criar o post (mensagem em português), ou `null` quando está tudo certo: página escolhida;
+ * descrição nos formatos com texto; imagem ou vídeo nos formatos com mídia. O título é sempre opcional.
  */
-export function postFormError(form: PostForm): string | null {
+export function postFormError(form: PostForm, site: Site): string | null {
   const format = POST_FORMATS.find(f => f.value === form.format);
-  if (!form.title.trim()) return "Escreva o título do post.";
+  if (!site.pages.some(p => p.id === form.pageId))
+    return "Escolha a página do post.";
   if (format?.text && !form.description.trim())
     return "Escreva a descrição do post.";
   if (format?.media && !form.media.trim())
@@ -145,35 +135,22 @@ export function postFormError(form: PostForm): string | null {
 }
 
 /**
- * Cria o post do modal: a descrição vira o resumo (cards) e o texto do post; a imagem ou o vídeo vira a
- * capa, que o site já mostra como imagem ou como vídeo conforme o arquivo ou link.
+ * Põe o post no fim da página escolhida, como um bloco "Post" (título opcional, imagem ou vídeo e descrição).
+ * Depois ele sobe ou desce como qualquer bloco. Sem página válida, devolve o mesmo `site`.
  */
-export function createPostFromForm(
+export function addPostToPage(
   site: Site,
   form: PostForm
-): { post: Post; site: Site } {
+): { id: string; site: Site } {
   const format = POST_FORMATS.find(f => f.value === form.format);
-  let base = site;
-  let categoryId = form.categoryId;
-  const name = form.newCategory?.trim();
-  if (name) {
-    base = addCategory(site, name);
-    categoryId = base.categories[base.categories.length - 1]?.id ?? null;
-  }
-  const title = form.title.trim();
-  const res = addPost(base, title, categoryId);
-  const description = form.description.trim();
-  if (format?.text) {
-    const body = createBlock("text");
-    body.props = { ...body.props, text: description };
-    res.post.blocks = [body];
-    res.post.excerpt = summary(description);
-  } else {
-    res.post.blocks = [];
-  }
-  res.post.coverImage = format?.media ? form.media.trim() : null;
-  res.post.status = form.publish ? "published" : "draft";
-  return res;
+  const res = insertBlock(site, `page:${form.pageId}`, "postItem");
+  if (res.site === site) return { id: res.id, site };
+  const props = {
+    description: format?.text ? form.description.trim() : "",
+    media: format?.media ? form.media.trim() : "",
+    title: form.title.trim(),
+  };
+  return { id: res.id, site: updateBlockProps(res.site, res.id, props) };
 }
 
 export function updatePost(site: Site, id: string, patch: Partial<Post>): Site {

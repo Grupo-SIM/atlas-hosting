@@ -676,20 +676,11 @@ function groupBullets(paras: string[]): (string | string[])[] {
   return out;
 }
 
-const text = defineBlock(z.object({ text: str("Escreva seu texto aqui.") }), {
-  fields: [
-    {
-      key: "text",
-      kind: "textarea",
-      label:
-        "Texto (linha em branco separa parágrafos; **negrito**, *itálico*, [texto](link))",
-    },
-  ],
-  group: "content",
-  label: "Texto",
-  render: p => (
-    <div className="sb-container sb-text">
-      {groupBullets(p.text.split(/\n{2,}/)).map(part =>
+/** Parágrafos e listas de um texto (linha em branco separa parágrafos; "• " vira item de lista). */
+function Paragraphs({ text }: { text: string }) {
+  return (
+    <>
+      {groupBullets(text.split(/\n{2,}/)).map(part =>
         Array.isArray(part) ? (
           <ul className="sb-list" key={part.join("\n")}>
             {part.map(item => (
@@ -704,10 +695,66 @@ const text = defineBlock(z.object({ text: str("Escreva seu texto aqui.") }), {
           </p>
         )
       )}
+    </>
+  );
+}
+
+const text = defineBlock(z.object({ text: str("Escreva seu texto aqui.") }), {
+  fields: [
+    {
+      key: "text",
+      kind: "textarea",
+      label:
+        "Texto (linha em branco separa parágrafos; **negrito**, *itálico*, [texto](link))",
+    },
+  ],
+  group: "content",
+  label: "Texto",
+  render: p => (
+    <div className="sb-container sb-text">
+      <Paragraphs text={p.text} />
     </div>
   ),
   type: "text",
 });
+
+/** Post solto numa página: título (opcional), imagem ou vídeo e descrição, com o estilo do template. */
+const postItem = defineBlock(
+  z.object({ description: str(), media: str(), title: str() }),
+  {
+    fields: [
+      { key: "title", kind: "text", label: "Título (opcional)" },
+      { key: "media", kind: "media", label: "Imagem ou vídeo" },
+      {
+        key: "description",
+        kind: "textarea",
+        label: "Descrição (linha em branco separa parágrafos)",
+      },
+    ],
+    group: "content",
+    label: "Post",
+    render: p => (
+      <div className="sb-post-item">
+        {p.title ? (
+          <div className="sb-container sb-heading">
+            <h2>{p.title}</h2>
+          </div>
+        ) : null}
+        {p.media ? (
+          <div className="sb-container sb-image">
+            <Img alt={p.title} src={p.media} />
+          </div>
+        ) : null}
+        {p.description ? (
+          <div className="sb-container sb-text">
+            <Paragraphs text={p.description} />
+          </div>
+        ) : null}
+      </div>
+    ),
+    type: "postItem",
+  }
+);
 
 const image = defineBlock(z.object({ alt: str(), src: str(), url: str() }), {
   fields: [
@@ -2665,6 +2712,7 @@ export const blockDefinitions: BlockDefinition[] = [
   hero,
   heading,
   text,
+  postItem,
   image,
   button,
   videoGrid,

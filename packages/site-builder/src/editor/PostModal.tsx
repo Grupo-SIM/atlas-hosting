@@ -10,39 +10,36 @@ import {
   postFormError,
 } from "./site-ops.js";
 
-const NEW_CATEGORY = "__new";
-
-/** Modal "Novo post": categoria (a aba), formato e o conteúdo (título, descrição, imagem ou vídeo). */
+/**
+ * Modal "Novo post": a página (aba) onde ele entra e o que ele mostra (título opcional, descrição, imagem ou
+ * vídeo). Só depois de criar o editor vai para a página, onde o post pode ser movido para cima ou para baixo.
+ */
 export function PostModal({
-  initialCategoryId,
+  initialPageId,
   onClose,
   onCreate,
   onUploadImage,
   site,
 }: {
-  initialCategoryId?: string | null;
+  initialPageId?: string;
   onClose: () => void;
   onCreate: (form: PostForm) => void;
   onUploadImage?: (file: File) => Promise<string>;
   site: Site;
 }) {
-  const hasCategories = site.categories.length > 0;
-  const [category, setCategory] = useState(
-    hasCategories
-      ? (initialCategoryId ?? site.categories[0]?.id ?? "")
-      : NEW_CATEGORY
+  const pages = site.pages.filter(p => p.slug !== "404");
+  const [pageId, setPageId] = useState(
+    pages.find(p => p.id === initialPageId)?.id ?? pages[0]?.id ?? ""
   );
-  const [newCategory, setNewCategory] = useState("");
   const [format, setFormat] = useState<PostFormat>("text");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [media, setMedia] = useState("");
-  const [publish, setPublish] = useState(true);
   const [tried, setTried] = useState(false);
-  const titleRef = useRef<HTMLInputElement>(null);
+  const firstRef = useRef<HTMLSelectElement>(null);
   const spec = POST_FORMATS.find(f => f.value === format) ?? POST_FORMATS[0];
 
-  useEffect(() => titleRef.current?.focus(), []);
+  useEffect(() => firstRef.current?.focus(), []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -51,20 +48,8 @@ export function PostModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const creating = category === NEW_CATEGORY;
-  const form: PostForm = {
-    categoryId: creating || !category ? null : category,
-    description,
-    format,
-    media,
-    newCategory: creating ? newCategory : undefined,
-    publish,
-    title,
-  };
-  const error =
-    creating && !newCategory.trim()
-      ? "Dê um nome para a nova categoria."
-      : postFormError(form);
+  const form: PostForm = { description, format, media, pageId, title };
+  const error = postFormError(form, site);
 
   const submit = () => {
     setTried(true);
@@ -87,39 +72,30 @@ export function PostModal({
         <header>
           <div>
             <h3>Novo post</h3>
-            <p>Escolha a categoria e o que o post vai mostrar.</p>
+            <p>
+              Escolha a página e o conteúdo. Depois você coloca o post onde
+              quiser nela.
+            </p>
           </div>
         </header>
         <div className="body">
           <label className="sbe-field">
-            <span>Categoria (aba onde o post aparece)</span>
+            <span>Página (a aba onde o post vai ficar)</span>
             <select
-              onChange={e => setCategory(e.target.value)}
-              value={category}
+              onChange={e => setPageId(e.target.value)}
+              ref={firstRef}
+              value={pageId}
             >
-              {site.categories.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+              {pages.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
                 </option>
               ))}
-              <option value="">Sem categoria</option>
-              <option value={NEW_CATEGORY}>+ Nova categoria…</option>
             </select>
           </label>
-          {creating ? (
-            <label className="sbe-field">
-              <span>Nome da nova categoria</span>
-              <input
-                onChange={e => setNewCategory(e.target.value)}
-                placeholder="Ex.: Esportes"
-                type="text"
-                value={newCategory}
-              />
-            </label>
-          ) : null}
 
           <div className="sbe-field">
-            <span>O que o post mostra</span>
+            <span>O que o post tem</span>
             <div className="sbe-tabs2">
               {POST_FORMATS.map(f => (
                 <button
@@ -136,10 +112,9 @@ export function PostModal({
           </div>
 
           <label className="sbe-field">
-            <span>Título</span>
+            <span>Título (opcional)</span>
             <input
               onChange={e => setTitle(e.target.value)}
-              ref={titleRef}
               type="text"
               value={title}
             />
@@ -170,15 +145,6 @@ export function PostModal({
               value={media}
             />
           ) : null}
-
-          <label className="sbe-check">
-            <input
-              checked={publish}
-              onChange={e => setPublish(e.target.checked)}
-              type="checkbox"
-            />
-            <span>Publicar já (desmarque para salvar como rascunho)</span>
-          </label>
           {tried && error ? <small className="sbe-error">{error}</small> : null}
         </div>
         <footer>
