@@ -46,4 +46,24 @@ describe("bloco Post", () => {
     expect(out).not.toContain("<h2>");
     expect(out).not.toContain("sb-text");
   });
+
+  test("mídia menor e cortada: largura em %, proporção da moldura e parte que aparece", async () => {
+    const out = await render({
+      media: "https://exemplo.com/foto.jpg",
+      mediaRatio: "1.7778",
+      mediaWidth: "60",
+      mediaX: "20",
+      mediaY: "80",
+    });
+    expect(out).toContain("sb-post-media is-cropped");
+    expect(out).toContain("width:60%");
+    expect(out).toMatch(/aspect-ratio:1\.7778/);
+    expect(out).toContain("--pm-pos:20% 80%");
+  });
+
+  test("sem ajuste: a mídia fica inteira e na largura toda", async () => {
+    const out = await render({ media: "https://exemplo.com/foto.jpg" });
+    expect(out).not.toContain("is-cropped");
+    expect(out).not.toContain("width:");
+  });
 });

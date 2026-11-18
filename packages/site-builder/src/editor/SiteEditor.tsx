@@ -514,6 +514,7 @@ export function SiteEditor({
   } | null>(null);
   const frameLive = useRef<Frame>({ x: 0, y: 0, z: 1 });
   const selBoxRef = useRef<HTMLDivElement | null>(null);
+  const mediaBoxRef = useRef<HTMLDivElement | null>(null);
   const hoverBoxRef = useRef<HTMLDivElement | null>(null);
   const guideVRef = useRef<HTMLDivElement | null>(null);
   const guideHRef = useRef<HTMLDivElement | null>(null);
@@ -715,7 +716,7 @@ export function SiteEditor({
   }, [dirty]);
 
   // Destaque do bloco (ou do elemento) selecionado dentro do canvas.
-  const paintSelection = () => {
+  const paintSelectionBox = () => {
     const root = canvasRef.current;
     const box = selBoxRef.current;
     if (!root) return;
@@ -738,7 +739,118 @@ export function SiteEditor({
     box.style.width = `${r.width}px`;
     box.style.height = `${r.height}px`;
   };
+
+  /** Alças de redimensionar a mídia do post selecionado (quinas = reduz inteira; alça de baixo = corta a altura). */
+  const paintMedia = () => {
+    const root = canvasRef.current;
+    const box = mediaBoxRef.current;
+    if (!(root && box)) return;
+    const block =
+      selectedId && !handActive && !inlineEdit.current
+        ? root.querySelector<HTMLElement>(`[data-block-id="${selectedId}"]`)
+        : null;
+    const media =
+      block?.dataset.blockType === "postItem"
+        ? block.querySelector<HTMLElement>(".sb-post-media")
+        : null;
+    if (!media) {
+      box.style.display = "none";
+      return;
+    }
+    const r = media.getBoundingClientRect();
+    box.style.display = "block";
+    box.style.left = `${r.left}px`;
+    box.style.top = `${r.top}px`;
+    box.style.width = `${r.width}px`;
+    box.style.height = `${r.height}px`;
+  };
+
+  const paintSelection = () => {
+    paintSelectionBox();
+    paintMedia();
+  };
   useEffect(paintSelection);
+
+  /**
+   * Arrastar uma alça da mídia do post. Quina: muda a largura (em % do espaço do post) e a mídia continua
+   * inteira, só menor. Alça de baixo: muda a altura da moldura, e a mídia é cortada para caber (vídeo em
+   * retrato perde menos). Mostra ao vivo e grava ao soltar.
+   */
+  const startMediaResize = (
+    e: PointerEvent<HTMLElement>,
+    mode: "corner" | "height",
+    corner = "se"
+  ) => {
+    if (e.button !== 0 || !selectedId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const blockId = selectedId;
+    const media = canvasRef.current?.querySelector<HTMLElement>(
+      `[data-block-id="${blockId}"] .sb-post-media`
+    );
+    const parent = media?.parentElement;
+    const block = findBlock(siteRef.current, blockId);
+    if (!(media && parent && block)) return;
+    const cs = getComputedStyle(parent);
+    const maxW =
+      parent.clientWidth -
+      Number.parseFloat(cs.paddingLeft) -
+      Number.parseFloat(cs.paddingRight);
+    const w0 = media.offsetWidth;
+    const h0 = media.offsetHeight;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const side = corner.includes("w") ? -1 : 1;
+    let width = Number(block.props.mediaWidth) || 100;
+    let ratio = Number(block.props.mediaRatio) || 0;
+    let moved = false;
+    const move = (ev: globalThis.PointerEvent) => {
+      moved = true;
+      if (mode === "corner") {
+        // A mídia fica centrada: a borda acompanha o ponteiro, então a largura muda o dobro do arrasto.
+        const w = Math.min(
+          maxW,
+          Math.max(60, w0 + (side * 2 * (ev.clientX - startX)) / zoom)
+        );
+        width = Math.round((w / maxW) * 1000) / 10;
+        media.style.width = width >= 100 ? "" : `${width}%`;
+      } else {
+        const h = Math.max(40, h0 + (ev.clientY - startY) / zoom);
+        ratio =
+          Math.round(Math.min(4, Math.max(0.25, media.offsetWidth / h)) * 100) /
+          100;
+        media.classList.add("is-cropped");
+        media.style.aspectRatio = String(ratio);
+      }
+      paintMedia();
+      paintSelectionBox();
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      if (!moved) return;
+      justDragged.current = true;
+      setTimeout(() => {
+        justDragged.current = false;
+      }, 0);
+      edit(
+        updateBlockProps(
+          siteRef.current,
+          blockId,
+          mode === "corner" ? { mediaWidth: width } : { mediaRatio: ratio }
+        ),
+        {
+          id: blockId,
+          key: `media:${blockId}:${mode}`,
+          label: `${mode === "corner" ? "Redimensionou" : "Cortou"} · ${labelOf(block.type)}`,
+        }
+      );
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
 
   // As camadas leem o DOM do canvas; repinta depois que o site renderizou.
   useEffect(() => setDomTick(t => t + 1), [site, path, device]);
@@ -1049,6 +1161,8 @@ export function SiteEditor({
     }
     // Clique dentro do texto que está sendo editado só move o cursor.
     if (inlineEdit.current?.el.contains(e.target as Node)) return;
+    // Alças da mídia: o clique nelas não troca a seleção.
+    if ((e.target as HTMLElement).closest(".sbe-mediabox")) return;
     if (justDragged.current) {
       justDragged.current = false;
       e.preventDefault();
@@ -2280,6 +2394,7 @@ export function SiteEditor({
           onDragStart={e => e.preventDefault()}
           onPointerDownCapture={e => {
             if (inlineEdit.current?.el.contains(e.target as Node)) return;
+            if ((e.target as HTMLElement).closest(".sbe-mediabox")) return;
             // Mãozinha (ou botão do meio do mouse): arrastar leva a tela, sem selecionar nem mover nada.
             if (e.button === 1 || (handActive && e.button === 0)) {
               startPan(e);
@@ -2312,6 +2427,21 @@ export function SiteEditor({
             <span />
           </div>
           <div className="sbe-selbox" ref={selBoxRef} />
+          <div className="sbe-mediabox" ref={mediaBoxRef}>
+            {(["nw", "ne", "sw", "se"] as const).map(c => (
+              <i
+                className={`h ${c}`}
+                key={c}
+                onPointerDown={e => startMediaResize(e, "corner", c)}
+                title="Arraste para diminuir ou aumentar, sem cortar"
+              />
+            ))}
+            <i
+              className="h s"
+              onPointerDown={e => startMediaResize(e, "height")}
+              title="Arraste para cortar a altura (o que passar da moldura some)"
+            />
+          </div>
           <div className="sbe-guide v" ref={guideVRef} />
           <div className="sbe-guide h" ref={guideHRef} />
           <div

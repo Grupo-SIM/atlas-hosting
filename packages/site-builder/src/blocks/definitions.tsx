@@ -718,13 +718,57 @@ const text = defineBlock(z.object({ text: str("Escreva seu texto aqui.") }), {
   type: "text",
 });
 
-/** Post solto numa página: título (opcional), imagem ou vídeo e descrição, com o estilo do template. */
+/** Proporções que o corte da mídia do post oferece no painel (o arrasto no canvas aceita qualquer valor). */
+const POST_RATIOS = [
+  { label: "Inteira (sem cortar)", value: "0" },
+  { label: "Horizontal 16:9", value: "1.7778" },
+  { label: "Padrão 4:3", value: "1.3333" },
+  { label: "Quadrada 1:1", value: "1" },
+  { label: "Retrato 3:4", value: "0.75" },
+  { label: "Vertical 9:16", value: "0.5625" },
+];
+
+/**
+ * Post solto numa página: título (opcional), imagem ou vídeo e descrição, com o estilo do template.
+ * A mídia pode ser reduzida (`mediaWidth`, % da largura, sempre inteira) e cortada (`mediaRatio` = largura ÷ altura
+ * da moldura; 0 = inteira), escolhendo qual parte aparece (`mediaX`/`mediaY`).
+ */
 const postItem = defineBlock(
-  z.object({ description: str(), media: str(), title: str() }),
+  z.object({
+    description: str(),
+    media: str(),
+    mediaRatio: z.coerce.number().min(0).max(4).default(0).catch(0),
+    mediaWidth: z.coerce.number().min(10).max(100).default(100).catch(100),
+    mediaX: z.coerce.number().min(0).max(100).default(50).catch(50),
+    mediaY: z.coerce.number().min(0).max(100).default(50).catch(50),
+    title: str(),
+  }),
   {
     fields: [
       { key: "title", kind: "text", label: "Título (opcional)" },
       { key: "media", kind: "media", label: "Imagem ou vídeo" },
+      {
+        key: "mediaWidth",
+        kind: "number",
+        label: "Largura da mídia em % (10–100; ou arraste a quina no canvas)",
+      },
+      {
+        customLabel: "Personalizado (arrastado no canvas)",
+        key: "mediaRatio",
+        kind: "select",
+        label: "Corte da mídia (ou arraste a alça de baixo no canvas)",
+        options: POST_RATIOS,
+      },
+      {
+        key: "mediaX",
+        kind: "number",
+        label: "Parte que aparece no corte: horizontal em % (0 = esquerda)",
+      },
+      {
+        key: "mediaY",
+        kind: "number",
+        label: "Parte que aparece no corte: vertical em % (0 = topo)",
+      },
       {
         key: "description",
         kind: "textarea",
@@ -742,7 +786,20 @@ const postItem = defineBlock(
         ) : null}
         {p.media ? (
           <div className="sb-container sb-image">
-            <Img alt={p.title} src={p.media} />
+            <div
+              className={
+                p.mediaRatio > 0 ? "sb-post-media is-cropped" : "sb-post-media"
+              }
+              style={
+                {
+                  "--pm-pos": `${p.mediaX}% ${p.mediaY}%`,
+                  aspectRatio: p.mediaRatio > 0 ? p.mediaRatio : undefined,
+                  width: p.mediaWidth < 100 ? `${p.mediaWidth}%` : undefined,
+                } as CSSProperties
+              }
+            >
+              <Img alt={p.title} src={p.media} />
+            </div>
           </div>
         ) : null}
         {p.description ? (

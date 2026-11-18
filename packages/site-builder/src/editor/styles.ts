@@ -79,6 +79,13 @@ export const editorCss = `
 .sbe-canvas.panning,.sbe-canvas.panning *{cursor:grabbing!important;user-select:none}
 .sbe-framebar{position:fixed;z-index:20;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;border-radius:999px;background:#1b1b1f;color:#fff;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .sbe-framebar button{border:0;border-radius:999px;padding:5px 11px;background:#d6f34a;color:#111;font-weight:700;font-size:12px;cursor:pointer}
+.sbe-mediabox{display:none;position:fixed;z-index:7;pointer-events:none;box-sizing:border-box;border:1px dashed var(--violet)}
+.sbe-mediabox .h{position:absolute;display:block;width:12px;height:12px;box-sizing:border-box;background:#fff;border:2px solid var(--violet);border-radius:3px;pointer-events:auto;touch-action:none}
+.sbe-mediabox .nw{left:-7px;top:-7px;cursor:nwse-resize}
+.sbe-mediabox .ne{right:-7px;top:-7px;cursor:nesw-resize}
+.sbe-mediabox .sw{left:-7px;bottom:-7px;cursor:nesw-resize}
+.sbe-mediabox .se{right:-7px;bottom:-7px;cursor:nwse-resize}
+.sbe-mediabox .s{left:50%;bottom:-7px;width:30px;height:10px;margin-left:-15px;cursor:ns-resize}
 .sbe-guide{display:none;position:fixed;z-index:6;pointer-events:none;background:#ff3d8b}
 .sbe-guide.v{width:1px}
 .sbe-guide.h{height:1px}

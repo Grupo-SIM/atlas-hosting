@@ -49,7 +49,7 @@ describe("addPostToPage", () => {
   });
 
   test("título + descrição", () => {
-    expect(added().block?.props).toEqual({
+    expect(added().block?.props).toMatchObject({
       description: "Uma descrição.",
       media: "",
       title: "Meu post",
@@ -71,7 +71,7 @@ describe("addPostToPage", () => {
       expect(
         added({ description: "ignorada", format, media: "/m.mp4", title: "" })
           .block?.props
-      ).toEqual({ description: "", media: "/m.mp4", title: "" });
+      ).toMatchObject({ description: "", media: "/m.mp4", title: "" });
     }
   });
 

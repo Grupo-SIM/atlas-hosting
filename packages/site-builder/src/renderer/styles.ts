@@ -203,6 +203,11 @@ export const siteCss = `
 .sb-post-header time{display:block;color:var(--sb-muted);font-size:.8rem}
 .sb-post-content .sb-container{width:100%;padding-block:6px}
 .sb-post-content .sb-image img{border-radius:12px}
+.sb-post-media{margin-inline:auto;max-width:100%;overflow:hidden;border-radius:12px}
+.sb-post-media>img,.sb-post-media>video,.sb-post-media>iframe{display:block;width:100%}
+.sb-post-media>img,.sb-post-media>video{height:auto}
+.sb-post-media.is-cropped>img,.sb-post-media.is-cropped>video,.sb-post-media.is-cropped>iframe{height:100%;border-radius:0}
+.sb-post-media.is-cropped>img,.sb-post-media.is-cropped>video{object-fit:cover;object-position:var(--pm-pos,50% 50%)}
 .sb-sidebar h4{margin-top:20px}
 .sb-sidebar ul{list-style:none;padding:0;margin:0}
 .sb-sidebar li{padding:4px 0}

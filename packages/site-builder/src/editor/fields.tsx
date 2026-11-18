@@ -210,6 +210,9 @@ export function FieldInput({
               {o.label}
             </option>
           ))}
+          {field.customLabel && !field.options?.some(o => o.value === str) ? (
+            <option value={str}>{field.customLabel}</option>
+          ) : null}
         </select>
       ) : field.kind === "color" ? (
         <input

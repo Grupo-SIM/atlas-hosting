@@ -32,6 +32,8 @@ export type FieldKind =
 /** Descreve como o painel de propriedades edita cada prop do bloco. */
 export interface FieldDef {
   itemFields?: FieldDef[];
+  /** Select: nome da opção extra que aparece quando o valor guardado não é nenhuma das listadas (ex.: um corte feito arrastando). */
+  customLabel?: string;
   key: string;
   kind: FieldKind;
   label: string;
