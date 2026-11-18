@@ -84,6 +84,9 @@ const THEME_SWATCHES = {
   muted: ["#9fb0d0", "#94a3b8", "#6b7280", "#a8a29e"],
 } as const;
 
+/** Ordem no painel: o fundo da página primeiro. */
+const THEME_ORDER = ["bg", "fg", "muted", "card", "accent"] as const;
+
 const THEME_LABELS: Record<keyof typeof THEME_SWATCHES, string> = {
   accent: "Cor principal",
   bg: "Fundo da página",
@@ -1390,15 +1393,14 @@ export function Inspector({
             <div className="name">Página inteira</div>
             <span className="sbe-chip">Tema</span>
           </div>
+          <p className="sbe-hint" style={{ marginTop: 6 }}>
+            Ajustes do site todo. Clique num bloco para editar só ele.
+          </p>
         </div>
         <div className="sbe-scroll">
-          <div className="sbe-pad" style={{ gap: 18, padding: 16 }}>
-            <p className="sbe-hint">
-              Clique em qualquer bloco do site para editar. Aqui você ajusta o
-              tema do site inteiro.
-            </p>
+          <Section defaultOpen scope="page" title="Identidade do site">
             <div className="sbe-field">
-              <span className="sbe-h">Nome do site</span>
+              <span>Nome do site</span>
               <input
                 onChange={e => onSiteName(e.target.value)}
                 type="text"
@@ -1409,53 +1411,15 @@ export function Inspector({
               field={{
                 key: "favicon",
                 kind: "image",
-                label: "Favicon (ícone da aba no site publicado)",
+                label: "Favicon (ícone da aba)",
               }}
               onChange={v => onTheme({ favicon: String(v ?? "") }, "Favicon")}
               onUpload={onUploadImage}
               value={site.theme.favicon ?? ""}
             />
-            <div className="sbe-line">
-              <span>Anúncios no site</span>
-              <button
-                className={
-                  site.theme.ads === "on" ? "sbe-toggle on" : "sbe-toggle"
-                }
-                onClick={() =>
-                  onTheme(
-                    { ads: site.theme.ads === "on" ? "off" : "on" },
-                    "Anúncios"
-                  )
-                }
-                type="button"
-              >
-                <span />
-              </button>
-            </div>
-            <p className="sbe-hint">
-              Liga os espaços de anúncio do template. Há dois grupos que não têm
-              relação entre si: o anúncio do <b>topo</b> (faixa larga) e os
-              anúncios da <b>lateral direita</b> (1º, 2º e 3º). Depois clique
-              num espaço para enviar mídia só dele, ou configure abaixo: alterar
-              um muda todos os anúncios da mesma posição no site.
-              {site.theme.ads === "on" && site.theme.variant === "portal" ? (
-                <SideCountField onTheme={onTheme} site={site} />
-              ) : null}
-            </p>
-            {site.theme.ads === "on"
-              ? AD_KEYS.map(kind => (
-                  <GlobalAdFields
-                    key={kind}
-                    kind={kind}
-                    onTheme={onTheme}
-                    onUpload={onUploadImage}
-                    site={site}
-                  />
-                ))
-              : null}
-            {(
-              Object.keys(THEME_SWATCHES) as (keyof typeof THEME_SWATCHES)[]
-            ).map(key => (
+          </Section>
+          <Section defaultOpen scope="page" title="Fundo e cores">
+            {THEME_ORDER.map(key => (
               <div
                 key={key}
                 style={{ display: "flex", flexDirection: "column", gap: 8 }}
@@ -1478,11 +1442,38 @@ export function Inspector({
                 />
               </div>
             ))}
+          </Section>
+          <Section scope="page" title="Fonte">
+            {SITE_FONTS.map(f => (
+              <button
+                className="sbe-btn"
+                key={f}
+                onClick={() =>
+                  onTheme(
+                    { fontBody: fontStack(f), fontHeading: fontStack(f) },
+                    "Fonte"
+                  )
+                }
+                style={{
+                  borderColor: themeFont(site.theme) === f ? "#1d1c1a" : "",
+                  fontFamily: fontStack(f),
+                  fontSize: 14,
+                  padding: "9px 12px",
+                }}
+                type="button"
+              >
+                {f}
+              </button>
+            ))}
+          </Section>
+          <Section scope="page" title="Estilo do template">
             <VariantSettings
               onTheme={onTheme}
               onUpload={onUploadImage}
               site={site}
             />
+          </Section>
+          <Section scope="page" title="Google (SEO)">
             <FieldInput
               field={{
                 key: "seoDescription",
@@ -1497,31 +1488,50 @@ export function Inspector({
               }
               value={site.theme.seoDescription ?? ""}
             />
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <h4 className="sbe-h">Fonte</h4>
-              {SITE_FONTS.map(f => (
-                <button
-                  className="sbe-btn"
-                  key={f}
-                  onClick={() =>
-                    onTheme(
-                      { fontBody: fontStack(f), fontHeading: fontStack(f) },
-                      "Fonte"
-                    )
-                  }
-                  style={{
-                    borderColor: themeFont(site.theme) === f ? "#1d1c1a" : "",
-                    fontFamily: fontStack(f),
-                    fontSize: 14,
-                    padding: "9px 12px",
-                  }}
-                  type="button"
-                >
-                  {f}
-                </button>
-              ))}
+          </Section>
+          <Section
+            defaultOpen={site.theme.ads === "on"}
+            scope="page"
+            title="Anúncios"
+          >
+            <div className="sbe-line">
+              <span>Anúncios no site</span>
+              <button
+                className={
+                  site.theme.ads === "on" ? "sbe-toggle on" : "sbe-toggle"
+                }
+                onClick={() =>
+                  onTheme(
+                    { ads: site.theme.ads === "on" ? "off" : "on" },
+                    "Anúncios"
+                  )
+                }
+                type="button"
+              >
+                <span />
+              </button>
             </div>
-          </div>
+            <Tip label="Como funciona">
+              Liga os espaços de anúncio do template: o do <b>topo</b> (faixa
+              larga) e os da <b>lateral direita</b> (1º, 2º e 3º). Clique num
+              espaço para enviar mídia só dele, ou configure aqui: alterar um
+              muda todos os anúncios da mesma posição no site.
+            </Tip>
+            {site.theme.ads === "on" && site.theme.variant === "portal" ? (
+              <SideCountField onTheme={onTheme} site={site} />
+            ) : null}
+            {site.theme.ads === "on"
+              ? AD_KEYS.map(kind => (
+                  <GlobalAdFields
+                    key={kind}
+                    kind={kind}
+                    onTheme={onTheme}
+                    onUpload={onUploadImage}
+                    site={site}
+                  />
+                ))
+              : null}
+          </Section>
         </div>
       </>
     );
