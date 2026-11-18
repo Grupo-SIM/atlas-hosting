@@ -23,8 +23,10 @@ import {
   isDefaultFrame,
   parseFrame,
 } from "../model/style.js";
+import { customFonts } from "../renderer/fonts.js";
 import { resolveRoute } from "../renderer/routes.js";
 import { SiteRenderer } from "../renderer/SiteRenderer.js";
+import { themeVars } from "../renderer/styles.js";
 import { AiPanel } from "./AiPanel.js";
 import { ConfirmDialog, type ConfirmRequest } from "./ConfirmDialog.js";
 import { ContentPanel } from "./ContentPanel.js";
@@ -43,6 +45,13 @@ import { inlineTarget } from "./inline-text.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
 import { type LiveColors, readLiveColors } from "./live-colors.js";
 import { PostModal } from "./PostModal.js";
+import {
+  type LiveText,
+  QuickBar,
+  type QuickKind,
+  type QuickMedia,
+} from "./QuickBar.js";
+import { applyMedia, mediaMode, mediaTarget } from "./quick-target.js";
 import { type PublishConfig, ReviewDialog } from "./ReviewDialog.js";
 import {
   applyReplica,
@@ -515,6 +524,7 @@ export function SiteEditor({
   const frameLive = useRef<Frame>({ x: 0, y: 0, z: 1 });
   const selBoxRef = useRef<HTMLDivElement | null>(null);
   const mediaBoxRef = useRef<HTMLDivElement | null>(null);
+  const quickRef = useRef<HTMLDivElement | null>(null);
   const hoverBoxRef = useRef<HTMLDivElement | null>(null);
   const guideVRef = useRef<HTMLDivElement | null>(null);
   const guideHRef = useRef<HTMLDivElement | null>(null);
@@ -765,9 +775,32 @@ export function SiteEditor({
     box.style.height = `${r.height}px`;
   };
 
+  /** Põe a barra de edição junto do elemento selecionado: em cima, ou embaixo quando não cabe. */
+  const paintQuick = () => {
+    const root = canvasRef.current;
+    const bar = quickRef.current;
+    if (!(root && bar && selectedId)) return;
+    const block = root.querySelector<HTMLElement>(
+      `[data-block-id="${selectedId}"]`
+    );
+    const target = block && elPath ? elementAt(block, elPath) : block;
+    if (!target) return;
+    const c = root.getBoundingClientRect();
+    const r = target.getBoundingClientRect();
+    const bw = bar.offsetWidth;
+    const bh = bar.offsetHeight;
+    let top = r.top - bh - 8;
+    if (top < c.top + 4) top = Math.min(r.bottom + 8, c.bottom - bh - 4);
+    top = Math.max(c.top + 4, top);
+    const left = Math.max(c.left + 4, Math.min(r.left, c.right - bw - 4));
+    bar.style.left = `${left}px`;
+    bar.style.top = `${top}px`;
+  };
+
   const paintSelection = () => {
     paintSelectionBox();
     paintMedia();
+    paintQuick();
   };
   useEffect(paintSelection);
 
@@ -2018,6 +2051,104 @@ export function SiteEditor({
   const currentPage = route.kind === "page" ? route.page : undefined;
   const currentPost = route.kind === "post" ? route.post : undefined;
 
+  /** Estilo do elemento (ou do bloco inteiro) selecionado; vale para o painel e para a barra do canvas. */
+  const applyStyle = (
+    patch: Record<string, string | number | undefined>,
+    what: string
+  ) => {
+    if (!selected) return;
+    const now = siteRef.current;
+    edit(
+      elPath
+        ? updateElementStyle(now, selected.id, elPath, patch)
+        : updateBlockStyle(now, selected.id, patch),
+      {
+        id: selected.id,
+        key: `${selected.id}-s${elPath}-${Object.keys(patch).join()}`,
+        label: `${what} · ${labelOf(selected.type)}`,
+      }
+    );
+  };
+
+  // Barra de edição junto do que foi clicado: o que ela mostra depende do elemento (texto, caixa, imagem ou vídeo).
+  const quick = (() => {
+    if (!selected || framing || handActive || aiBusy) return null;
+    const node = canvasRef.current ? blockEl(selected.id) : null;
+    const el = node ? (elPath ? elementAt(node, elPath) : node) : null;
+    if (!(el && canvasRef.current)) return null;
+    const def = getBlockDefinition(selected.type);
+    const vars = themeVars(site.theme);
+    const resolve = (c: string) => {
+      const m = /^var\((--sb-[a-z-]+)\)$/.exec(c);
+      return m?.[1] ? (vars[m[1]] ?? c) : c;
+    };
+    const style = (elPath ? selected.elStyles?.[elPath] : selected.style) ?? {};
+    const own = Array.from(el.childNodes).some(
+      n => n.nodeType === Node.TEXT_NODE && (n.textContent ?? "").trim()
+    );
+    const kind: QuickKind =
+      el instanceof HTMLImageElement
+        ? "image"
+        : el instanceof HTMLVideoElement || el instanceof HTMLIFrameElement
+          ? "video"
+          : elPath && own
+            ? "text"
+            : "box";
+    const cs = getComputedStyle(el);
+    const live: LiveText = {
+      bold: Number.parseInt(cs.fontWeight, 10) >= 600,
+      italic: cs.fontStyle === "italic",
+      size: Number.parseFloat(cs.fontSize) || 16,
+      underline: cs.textDecorationLine.includes("underline"),
+    };
+    let media: QuickMedia | undefined;
+    if (def && (kind === "image" || kind === "video")) {
+      const target = mediaTarget({
+        currentPost,
+        defaults: def.defaults,
+        fields: def.fields,
+        hint: focusHint,
+        props: selected.props,
+        site,
+      });
+      if (target) {
+        const mode = mediaMode(target.value);
+        media = {
+          field:
+            target.kind === "post"
+              ? { key: "coverImage", kind: "image", label: "Imagem" }
+              : target.field,
+          mode: kind === "video" && mode === "image" ? "imported" : mode,
+          onChange: value =>
+            edit(
+              applyMedia(siteRef.current, selected.id, target, value, {
+                defaults: def.defaults,
+                props: selected.props,
+              }),
+              {
+                id: selected.id,
+                key: `media:${selected.id}:${focusHint.n}`,
+                label: `Mídia · ${labelOf(selected.type)}`,
+              }
+            ),
+          onUpload: onUploadImage,
+          value: target.value,
+        };
+      }
+    }
+    return {
+      hasText: (el.textContent ?? "").trim().length > 0 && kind !== "image",
+      kind,
+      live: canvasRef.current
+        ? readLiveColors(el, canvasRef.current)
+        : undefined,
+      liveText: live,
+      media,
+      resolve,
+      style,
+    };
+  })();
+
   return (
     <div className={aiBusy ? "sbe sbe-ailock" : "sbe"}>
       <style>{editorCss}</style>
@@ -2503,6 +2634,24 @@ export function SiteEditor({
             })()
           : null}
 
+        {quick ? (
+          <QuickBar
+            barRef={el => {
+              quickRef.current = el;
+            }}
+            customFonts={customFonts(site.theme)}
+            hasText={quick.hasText}
+            key={`${selected?.id}:${elPath}:${focusHint.n}`}
+            kind={quick.kind}
+            liveColors={quick.live}
+            liveText={quick.liveText}
+            media={quick.media}
+            onStyle={applyStyle}
+            resolve={quick.resolve}
+            style={quick.style}
+          />
+        ) : null}
+
         {video ? (
           <VideoPopup
             label={video.label}
@@ -2677,19 +2826,7 @@ export function SiteEditor({
               { key: "site-name", label: "Nome do site" }
             )
           }
-          onStyle={(patch, what) =>
-            selected &&
-            edit(
-              elPath
-                ? updateElementStyle(site, selected.id, elPath, patch)
-                : updateBlockStyle(site, selected.id, patch),
-              {
-                id: selected.id,
-                key: `${selected.id}-s${elPath}-${Object.keys(patch).join()}`,
-                label: `${what} · ${labelOf(selected.type)}`,
-              }
-            )
-          }
+          onStyle={applyStyle}
           onTheme={(patch, what) => {
             if (patch.ads !== undefined) {
               setAds(patch.ads === "on");
