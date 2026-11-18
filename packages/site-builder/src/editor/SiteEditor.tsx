@@ -807,11 +807,12 @@ export function SiteEditor({
   /**
    * Arrastar uma alça da mídia do post. Quina: muda a largura (em % do espaço do post) e a mídia continua
    * inteira, só menor. Alça de baixo: muda a altura da moldura, e a mídia é cortada para caber (vídeo em
-   * retrato perde menos). Mostra ao vivo e grava ao soltar.
+   * retrato perde menos). Alças dos lados: estreitam ou alargam a moldura mantendo a altura, e a mídia é
+   * cortada dos lados. Mostra ao vivo e grava ao soltar.
    */
   const startMediaResize = (
     e: PointerEvent<HTMLElement>,
-    mode: "corner" | "height",
+    mode: "corner" | "height" | "side",
     corner = "se"
   ) => {
     if (e.button !== 0 || !selectedId) return;
@@ -839,7 +840,18 @@ export function SiteEditor({
     let moved = false;
     const move = (ev: globalThis.PointerEvent) => {
       moved = true;
-      if (mode === "corner") {
+      if (mode === "side") {
+        // Mesma conta da quina (a mídia é centrada), mas a altura fica como estava: a proporção muda e corta os lados.
+        const w = Math.min(
+          maxW,
+          Math.max(60, w0 + (side * 2 * (ev.clientX - startX)) / zoom)
+        );
+        width = Math.round((w / maxW) * 1000) / 10;
+        ratio = Math.round(Math.min(4, Math.max(0.25, w / h0)) * 100) / 100;
+        media.style.width = width >= 100 ? "" : `${width}%`;
+        media.classList.add("is-cropped");
+        media.style.aspectRatio = String(ratio);
+      } else if (mode === "corner") {
         // A mídia fica centrada: a borda acompanha o ponteiro, então a largura muda o dobro do arrasto.
         const w = Math.min(
           maxW,
@@ -871,7 +883,11 @@ export function SiteEditor({
         updateBlockProps(
           siteRef.current,
           blockId,
-          mode === "corner" ? { mediaWidth: width } : { mediaRatio: ratio }
+          mode === "corner"
+            ? { mediaWidth: width }
+            : mode === "side"
+              ? { mediaRatio: ratio, mediaWidth: width }
+              : { mediaRatio: ratio }
         ),
         {
           id: blockId,
@@ -2565,6 +2581,14 @@ export function SiteEditor({
                 key={c}
                 onPointerDown={e => startMediaResize(e, "corner", c)}
                 title="Arraste para diminuir ou aumentar, sem cortar"
+              />
+            ))}
+            {(["w", "e"] as const).map(c => (
+              <i
+                className={`h ${c}`}
+                key={c}
+                onPointerDown={e => startMediaResize(e, "side", c)}
+                title="Arraste para cortar a largura (o que passar da moldura some)"
               />
             ))}
             <i

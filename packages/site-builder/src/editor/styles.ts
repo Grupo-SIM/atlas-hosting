@@ -85,6 +85,9 @@ export const editorCss = `
 .sbe-mediabox .ne{right:-7px;top:-7px;cursor:nesw-resize}
 .sbe-mediabox .sw{left:-7px;bottom:-7px;cursor:nesw-resize}
 .sbe-mediabox .se{right:-7px;bottom:-7px;cursor:nwse-resize}
+.sbe-mediabox .w,.sbe-mediabox .e{top:50%;width:10px;height:30px;margin-top:-15px;cursor:ew-resize}
+.sbe-mediabox .w{left:-7px}
+.sbe-mediabox .e{right:-7px}
 .sbe-mediabox .s{left:50%;bottom:-7px;width:30px;height:10px;margin-left:-15px;cursor:ns-resize}
 .sbq-bar{position:fixed;z-index:30;left:-9999px;top:0;display:flex;align-items:center;flex-wrap:wrap;gap:6px;max-width:calc(100vw - 24px);padding:6px 8px;background:#fff;border:1px solid var(--field);border-radius:12px;box-shadow:0 8px 24px rgba(30,28,24,.16);font-size:12px}
 .sbq-menu{position:relative}
