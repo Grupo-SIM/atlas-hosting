@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import type { User } from "@/lib/db/schema";
 import {
   canAccessSiteBuilder,
   hasComplimentaryAtlasHosting,
   isMasterAdmin,
+  pickBuilderUser,
 } from "./access";
 
 describe("canAccessSiteBuilder", () => {
@@ -92,5 +94,28 @@ describe("hasComplimentaryAtlasHosting", () => {
     withFreeFlag(" TRUE ", () => {
       expect(hasComplimentaryAtlasHosting()).toBe(true);
     });
+  });
+});
+
+describe("quem usa o Criador de Sites (pickBuilderUser)", () => {
+  const user = (id: string, over: Partial<User> = {}) =>
+    ({ email: `${id}@x.com`, id, isAdmin: false, ...over }) as User;
+  const admin = user("admin", { isAdmin: true });
+  const client = user("cliente");
+  const yes = async () => true;
+  const no = async () => false;
+
+  test("sem impersonação vale o usuário da sessão", async () => {
+    expect((await pickBuilderUser(admin, admin, yes))?.id).toBe("admin");
+    expect(await pickBuilderUser(client, client, no)).toBeNull();
+  });
+
+  test("admin dentro da conta de um cliente usa os sites do cliente, não os dele", async () => {
+    expect((await pickBuilderUser(admin, client, yes))?.id).toBe("cliente");
+  });
+
+  test("dentro da conta de um cliente sem acesso ao Criador, não abre (nem com o admin tendo acesso)", async () => {
+    const onlyAdmin = async (u: User) => u.id === "admin";
+    expect(await pickBuilderUser(admin, client, onlyAdmin)).toBeNull();
   });
 });
