@@ -187,12 +187,22 @@ const ITEM_NAMES: Record<string, string> = {
   P: "texto",
   SPAN: "texto",
 };
-const itemName = (el: HTMLElement) => ITEM_NAMES[el.tagName] ?? "área";
+const itemName = (el: HTMLElement) =>
+  el.classList.contains("sb-post-media")
+    ? "mídia"
+    : (ITEM_NAMES[el.tagName] ?? "área");
+
+/** Imagem, vídeo ou player dentro da moldura da mídia de um post. */
+const MEDIA_IN_FRAME = "img,video,iframe";
 
 /** Elemento "clicável" sob o ponteiro: links e botões valem como um item só. */
 function pickElement(target: HTMLElement): HTMLElement | null {
   const block = target.closest<HTMLElement>("[data-block-id]");
   if (!block) return null;
+  // A mídia do post e a moldura dela são um item só: mover, redimensionar e dar borda ou sombra valem para a
+  // moldura inteira. Se valessem para o vídeo de dentro, sobraria uma "caixa" atrás dele (a moldura corta o que sai).
+  const frame = target.closest<HTMLElement>(".sb-post-media");
+  if (frame && block.contains(frame)) return frame;
   // Imagem dentro de link continua sendo a imagem (para poder redimensionar).
   if (target instanceof HTMLImageElement) return target;
   const wrap = target.closest<HTMLElement>("a,button,.sb-header-search");
@@ -1128,7 +1138,7 @@ export function SiteEditor({
         // Mesma conta da quina (a mídia é centrada), mas a altura fica como estava: a proporção muda e corta os lados.
         const w = Math.min(
           maxW,
-          Math.max(60, w0 + (side * 2 * (ev.clientX - startX)) / zoom)
+          Math.max(maxW * 0.1, w0 + (side * 2 * (ev.clientX - startX)) / zoom)
         );
         width = Math.round((w / maxW) * 1000) / 10;
         ratio = Math.round(Math.min(4, Math.max(0.25, w / h0)) * 100) / 100;
@@ -1139,7 +1149,7 @@ export function SiteEditor({
         // A mídia fica centrada: a borda acompanha o ponteiro, então a largura muda o dobro do arrasto.
         const w = Math.min(
           maxW,
-          Math.max(60, w0 + (side * 2 * (ev.clientX - startX)) / zoom)
+          Math.max(maxW * 0.1, w0 + (side * 2 * (ev.clientX - startX)) / zoom)
         );
         width = Math.round((w / maxW) * 1000) / 10;
         media.style.width = width >= 100 ? "" : `${width}%`;
@@ -1544,7 +1554,14 @@ export function SiteEditor({
     }
     setFocusHint(h => ({
       n: h.n + 1,
-      ...hintOf(el, basePath, { x: e.clientX, y: e.clientY }),
+      // A moldura da mídia do post é o item; o campo da mídia se acha pela imagem ou vídeo que ela guarda.
+      ...hintOf(
+        el?.classList.contains("sb-post-media")
+          ? (el.querySelector(MEDIA_IN_FRAME) ?? el)
+          : el,
+        basePath,
+        { x: e.clientX, y: e.clientY }
+      ),
     }));
     // Clicar num texto já deixa escrever ali, com o cursor onde o clique caiu.
     if (block && !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)) {
@@ -1982,7 +1999,14 @@ export function SiteEditor({
     const original = node.data;
     const hint = {
       n: 0,
-      ...hintOf(el, basePath, { x: e.clientX, y: e.clientY }),
+      // A moldura da mídia do post é o item; o campo da mídia se acha pela imagem ou vídeo que ela guarda.
+      ...hintOf(
+        el?.classList.contains("sb-post-media")
+          ? (el.querySelector(MEDIA_IN_FRAME) ?? el)
+          : el,
+        basePath,
+        { x: e.clientX, y: e.clientY }
+      ),
     };
     const post = route.kind === "post" ? route.post : undefined;
     const target = (site: Site, props: Record<string, unknown>, text: string) =>
@@ -2486,10 +2510,16 @@ export function SiteEditor({
     const own = Array.from(el.childNodes).some(
       n => n.nodeType === Node.TEXT_NODE && (n.textContent ?? "").trim()
     );
+    // Moldura da mídia do post: a barra mostra o que ela guarda (imagem ou vídeo).
+    const inner = el.classList.contains("sb-post-media")
+      ? el.querySelector(MEDIA_IN_FRAME)
+      : null;
+    const mediaEl = inner ?? el;
     const kind: QuickKind =
-      el instanceof HTMLImageElement
+      mediaEl instanceof HTMLImageElement
         ? "image"
-        : el instanceof HTMLVideoElement || el instanceof HTMLIFrameElement
+        : mediaEl instanceof HTMLVideoElement ||
+            mediaEl instanceof HTMLIFrameElement
           ? "video"
           : elPath && own
             ? "text"

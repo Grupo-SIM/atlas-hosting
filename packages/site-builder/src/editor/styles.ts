@@ -88,6 +88,9 @@ export const editorCss = `
 .sbe-canvas .sb-header .sb-logo,.sbe-canvas .sb-header .sb-logo-img{cursor:grab;touch-action:none;user-select:none}
 .sbe-canvas img{-webkit-user-drag:none;user-select:none}
 .sbe-canvas iframe{pointer-events:none}
+/* Só a mídia do post recebe o mouse: a faixa em volta dela não vira uma "caixa" que se seleciona e se move. */
+.sbe-canvas .sb-post-item>.sb-image{pointer-events:none}
+.sbe-canvas .sb-post-media{pointer-events:auto}
 .sbe-canvas.framing img{cursor:grab}
 .sbe-canvas.hand,.sbe-canvas.hand *{cursor:grab!important;user-select:none}
 .sbe-canvas.hand.panning,.sbe-canvas.hand.panning *{cursor:grabbing!important}
