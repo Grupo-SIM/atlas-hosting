@@ -183,14 +183,7 @@ export function Navbar({ variant = "dark" }: { variant?: "dark" | "light" }) {
 
         {/* Auth Buttons (Desktop) + Hamburger (Mobile) */}
         <div className="flex flex-1 items-center justify-end gap-3 md:flex-none">
-          <CartButton
-            className={
-              isLight
-                ? "border-slate-200 bg-white text-slate-700 shadow-sm hover:text-sky-500"
-                : undefined
-            }
-            variant="landing"
-          />
+          <CartButton light={isLight} variant="landing" />
           <div className="hidden items-center gap-2 md:flex">
             {/* Currency dropdown disabled — BRL default only. <CurrencySelector value={displayCurrency} onChange={changeDisplayCurrency} isLight={isLight} /> */}
             {isAuthed ? (
