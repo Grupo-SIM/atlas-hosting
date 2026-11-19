@@ -117,3 +117,28 @@ describe("resolveLevels", () => {
     expect("inventada" in l).toBe(false);
   });
 });
+
+describe("Usuários já cadastrados", () => {
+  test("só o master concede, não entra em 'todas as áreas' e não abre o painel /admin sozinha", () => {
+    expect(isMasterOnlyArea("admin_users_existing")).toBe(true);
+    expect(ADMIN_AREA_KEYS).not.toContain("admin_users_existing");
+    const all = resolveLevels({
+      accessAll: "edit",
+      permissions: [],
+      profile: "viewer",
+    });
+    expect(all.admin_users_existing).toBe("none");
+    const admin = resolveLevels({
+      accessAll: null,
+      permissions: [],
+      profile: "admin",
+    });
+    expect(admin.admin_users_existing).toBe("none");
+    const liberado = resolveLevels({
+      accessAll: null,
+      permissions: [{ area: "admin_users_existing", level: "edit" }],
+      profile: "admin",
+    });
+    expect(liberado.admin_users_existing).toBe("edit");
+  });
+});

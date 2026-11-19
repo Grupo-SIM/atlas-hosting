@@ -93,6 +93,14 @@ export const AREA_GROUPS: AreaGroup[] = [
       },
       {
         available: true,
+        description:
+          "Dar, mudar e retirar acessos de contas que já existem na plataforma (clientes e outras pessoas), e não só das que a equipe criou. Exige também “Usuários”. Só o admin master libera, admin por admin, e fica fora de “todas as áreas”.",
+        key: "admin_users_existing",
+        label: "Usuários já cadastrados",
+        sensitive: true,
+      },
+      {
+        available: true,
         description: "Templates com exclusividade, preços e revendas.",
         key: "admin_exclusivity",
         label: "Exclusividade de templates",
@@ -135,7 +143,10 @@ export const OUTSIDE_ALL_AREAS = "admin_users";
  * Áreas que **só o admin master concede**, uma a uma: ficam fora de "todas as áreas" e do perfil Administrador, e
  * nem outro admin completo as tem (o master as libera pessoa por pessoa).
  */
-export const MASTER_ONLY_AREAS: readonly string[] = ["admin_templates"];
+export const MASTER_ONLY_AREAS: readonly string[] = [
+  "admin_templates",
+  "admin_users_existing",
+];
 export const isMasterOnlyArea = (key: string): boolean =>
   MASTER_ONLY_AREAS.includes(key);
 
@@ -146,11 +157,12 @@ export const isGrantableArea = (key: string): boolean =>
   GRANTABLE_AREAS.some(a => a.key === key);
 
 /**
- * Áreas que têm página em /admin (as que mostram o painel /admin para quem tem ao menos uma). Editar templates não
- * tem página de administração: o acesso é pela galeria em Criador de Sites.
+ * Áreas que têm página em /admin (as que mostram o painel /admin para quem tem ao menos uma). As que só o master
+ * concede não têm página própria: editar templates é pela galeria em Criador de Sites e "Usuários já cadastrados"
+ * vale dentro de Usuários.
  */
 export const ADMIN_AREA_KEYS = GRANTABLE_AREAS.filter(
-  a => a.key !== "admin_templates"
+  a => !isMasterOnlyArea(a.key)
 ).map(a => a.key);
 
 /** Qual área protege cada rota de administração (prefixo mais longo vence). */

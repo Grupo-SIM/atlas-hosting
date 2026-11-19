@@ -4,6 +4,7 @@ import {
   Eye,
   Pencil,
   Plus,
+  Search,
   Shield,
   ShieldCheck,
   Trash2,
@@ -56,9 +57,13 @@ import {
   PROFILE_LABELS,
 } from "@/lib/permissions/catalog";
 import type { ValidationMode } from "@/lib/site-builder/delegation";
+import { summary } from "./access-label";
 import {
   createTeamUserAction,
+  type ExistingUserHit,
+  grantExistingUserAction,
   removeTeamUserAction,
+  searchExistingUsersAction,
   type TeamUserRow,
   updateTeamUserAction,
 } from "./team-actions";
@@ -90,39 +95,12 @@ function randomPassword(): string {
   return Array.from(bytes, n => alphabet[n % alphabet.length]).join("");
 }
 
-function summary(row: TeamUserRow, master: boolean): string {
-  // O que só o master concede (editar templates) só aparece para ele: para os demais a escolha já foi feita.
-  const hasTemplates =
-    master && row.permissions.some(p => p.area === "admin_templates");
-  const templates = hasTemplates
-    ? ` + Editar templates (${
-        row.validation === "owner"
-          ? "validação com o cliente"
-          : row.validation === "master"
-            ? "validação com o Lucas"
-            : "validação automática"
-      })`
-    : "";
-  if (row.profile === "admin") {
-    return `Todas as áreas, inclusive Usuários${templates}`;
-  }
-  const n = row.permissions.filter(
-    p => master || !isMasterOnlyArea(p.area)
-  ).length;
-  if (row.accessAll) {
-    const extra = row.permissions.some(p => p.area === OUTSIDE_ALL_AREAS)
-      ? " + Usuários"
-      : "";
-    return `Todas as áreas (${row.accessAll === "edit" ? "edita" : "visualiza"})${extra}${templates}`;
-  }
-  return `${n} ${n === 1 ? "área" : "áreas"}`;
-}
-
-function TeamUserDialog({
+export function TeamUserDialog({
   levels,
   master,
   onOpenChange,
   open,
+  target,
   user,
 }: {
   levels: Record<string, Level>;
@@ -130,20 +108,24 @@ function TeamUserDialog({
   master: boolean;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  /** Conta que já existe e vai ganhar acesso agora (nome e senha dela não se mexem). */
+  target?: ExistingUserHit;
   /** Ausente = criar. */
   user?: TeamUserRow;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const editing = Boolean(user);
+  // Conta que já existia: aqui só se mexe no acesso, nunca no nome, no e-mail nem na senha.
+  const fixedAccount = Boolean(target) || Boolean(user?.existing);
 
   const initialSelected = (): Selected => {
     const out: Selected = {};
     for (const p of user?.permissions ?? []) out[p.area] = p.level;
     return out;
   };
-  const [name, setName] = useState(user?.name ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
+  const [name, setName] = useState(user?.name ?? target?.name ?? "");
+  const [email, setEmail] = useState(user?.email ?? target?.email ?? "");
   const [password, setPassword] = useState("");
   const [profile, setProfile] = useState<AccessProfile>(
     user?.profile ?? "viewer"
@@ -247,11 +229,19 @@ function TeamUserDialog({
         profile,
         validation: master ? validation : undefined,
       };
-      const result = user
-        ? await updateTeamUserAction(user.id, input)
-        : await createTeamUserAction(input);
+      const result = target
+        ? await grantExistingUserAction(target.id, input)
+        : user
+          ? await updateTeamUserAction(user.id, input)
+          : await createTeamUserAction(input);
       if (result.ok) {
-        toast.success(editing ? "Acessos atualizados" : "Usuário criado");
+        toast.success(
+          target
+            ? "Acesso concedido"
+            : editing
+              ? "Acessos atualizados"
+              : "Usuário criado"
+        );
         onOpenChange(false);
         router.refresh();
       } else {
@@ -265,7 +255,11 @@ function TeamUserDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
-            {editing ? "Editar usuário e acessos" : "Novo usuário"}
+            {target
+              ? "Dar acesso a um usuário já cadastrado"
+              : editing
+                ? "Editar usuário e acessos"
+                : "Novo usuário"}
           </DialogTitle>
           <DialogDescription>
             O que a pessoa pode fazer e em quais áreas ela entra. Ninguém recebe
@@ -273,50 +267,62 @@ function TeamUserDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <section className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="team-name">Nome</Label>
-            <Input
-              id="team-name"
-              onChange={e => setName(e.target.value)}
-              value={name}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="team-email">E-mail</Label>
-            <Input
-              disabled={editing}
-              id="team-email"
-              onChange={e => setEmail(e.target.value)}
-              type="email"
-              value={email}
-            />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="team-password">
-              {editing ? "Nova senha (vazio mantém a atual)" : "Senha"}
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                autoComplete="new-password"
-                id="team-password"
-                onChange={e => setPassword(e.target.value)}
-                value={password}
-              />
-              <Button
-                onClick={() => setPassword(randomPassword())}
-                type="button"
-                variant="outline"
-              >
-                Gerar
-              </Button>
-            </div>
-            <p className="text-muted-foreground text-xs">
-              Você passa a senha para a pessoa. Ela entra com o e-mail acima,
-              sem precisar verificar o e-mail.
+        {fixedAccount ? (
+          <section className="rounded-lg border bg-muted/40 p-3 text-sm">
+            <div className="font-medium">{name}</div>
+            <div className="text-muted-foreground text-xs">{email}</div>
+            <p className="mt-2 text-muted-foreground text-xs">
+              Conta que já existe na plataforma. Aqui você só define o que ela
+              acessa; o nome, o e-mail e a senha continuam como estão, e ela
+              segue usando a conta de cliente normalmente.
             </p>
-          </div>
-        </section>
+          </section>
+        ) : (
+          <section className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="team-name">Nome</Label>
+              <Input
+                id="team-name"
+                onChange={e => setName(e.target.value)}
+                value={name}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="team-email">E-mail</Label>
+              <Input
+                disabled={editing}
+                id="team-email"
+                onChange={e => setEmail(e.target.value)}
+                type="email"
+                value={email}
+              />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="team-password">
+                {editing ? "Nova senha (vazio mantém a atual)" : "Senha"}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  autoComplete="new-password"
+                  id="team-password"
+                  onChange={e => setPassword(e.target.value)}
+                  value={password}
+                />
+                <Button
+                  onClick={() => setPassword(randomPassword())}
+                  type="button"
+                  variant="outline"
+                >
+                  Gerar
+                </Button>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Você passa a senha para a pessoa. Ela entra com o e-mail acima,
+                sem precisar verificar o e-mail.
+              </p>
+            </div>
+          </section>
+        )}
 
         <section className="space-y-2">
           <div>
@@ -510,7 +516,13 @@ function TeamUserDialog({
             Cancelar
           </Button>
           <Button disabled={pending} onClick={submit}>
-            {pending ? "Salvando…" : editing ? "Salvar" : "Criar usuário"}
+            {pending
+              ? "Salvando…"
+              : target
+                ? "Dar acesso"
+                : editing
+                  ? "Salvar"
+                  : "Criar usuário"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -518,18 +530,101 @@ function TeamUserDialog({
   );
 }
 
+/** Procura uma conta que já existe (por nome ou e-mail) para dar acesso a ela. */
+function ExistingUserPicker({
+  onOpenChange,
+  onPick,
+}: {
+  onOpenChange: (open: boolean) => void;
+  onPick: (hit: ExistingUserHit) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [hits, setHits] = useState<ExistingUserHit[] | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const search = () =>
+    startTransition(async () => {
+      const result = await searchExistingUsersAction(query);
+      if (result.ok) setHits(result.users);
+      else {
+        setHits(null);
+        toast.error(result.error);
+      }
+    });
+
+  return (
+    <Dialog onOpenChange={onOpenChange} open>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Dar acesso a um usuário já cadastrado</DialogTitle>
+          <DialogDescription>
+            Procure a conta pelo nome ou pelo e-mail. Aparecem só contas que
+            ainda não têm acesso de equipe.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="flex gap-2"
+          onSubmit={e => {
+            e.preventDefault();
+            search();
+          }}
+        >
+          <Input
+            autoFocus
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Nome ou e-mail"
+            value={query}
+          />
+          <Button disabled={pending || query.trim().length < 2} type="submit">
+            {pending ? "Procurando…" : "Procurar"}
+          </Button>
+        </form>
+        {hits ? (
+          hits.length === 0 ? (
+            <p className="rounded-md border border-dashed p-4 text-center text-muted-foreground text-sm">
+              Nenhuma conta encontrada.
+            </p>
+          ) : (
+            <ul className="max-h-72 divide-y overflow-y-auto rounded-md border">
+              {hits.map(hit => (
+                <li key={hit.id}>
+                  <button
+                    className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-muted"
+                    onClick={() => onPick(hit)}
+                    type="button"
+                  >
+                    <span className="font-medium text-sm">{hit.name}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {hit.email}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /** Lista da equipe com criar, editar e remover. `levels` é o acesso de quem está logado (o teto do que pode conceder). */
 export function TeamManager({
+  canExisting = false,
   levels,
   master,
   rows,
 }: {
+  /** Pode dar acesso a contas que já existem (o master, e os admins que ele liberou). */
+  canExisting?: boolean;
   levels: Record<string, Level>;
   master: boolean;
   rows: TeamUserRow[];
 }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [target, setTarget] = useState<ExistingUserHit | null>(null);
   const [editing, setEditing] = useState<TeamUserRow | null>(null);
   const [removing, setRemoving] = useState<TeamUserRow | null>(null);
   const [pending, startTransition] = useTransition();
@@ -562,10 +657,18 @@ export function TeamManager({
             visualizar, editar ou administrar.
           </p>
         </div>
-        <Button onClick={() => setCreating(true)}>
-          <UserPlus className="mr-2 size-4" />
-          Novo usuário
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {canExisting ? (
+            <Button onClick={() => setPicking(true)} variant="outline">
+              <Search className="mr-2 size-4" />
+              Usuário já cadastrado
+            </Button>
+          ) : null}
+          <Button onClick={() => setCreating(true)}>
+            <UserPlus className="mr-2 size-4" />
+            Novo usuário
+          </Button>
+        </div>
       </div>
 
       {rows.length === 0 ? (
@@ -585,6 +688,9 @@ export function TeamManager({
                   {row.name}
                   {row.suspended && (
                     <Badge variant="destructive">suspenso</Badge>
+                  )}
+                  {row.existing && (
+                    <Badge variant="outline">conta já existente</Badge>
                   )}
                 </div>
                 <div className="truncate text-muted-foreground text-xs">
@@ -619,6 +725,25 @@ export function TeamManager({
         </ul>
       )}
 
+      {picking && (
+        <ExistingUserPicker
+          onOpenChange={o => !o && setPicking(false)}
+          onPick={hit => {
+            setPicking(false);
+            setTarget(hit);
+          }}
+        />
+      )}
+      {target && (
+        <TeamUserDialog
+          key={target.id}
+          levels={levels}
+          master={master}
+          onOpenChange={o => !o && setTarget(null)}
+          open
+          target={target}
+        />
+      )}
       {creating && (
         <TeamUserDialog
           levels={levels}
@@ -645,8 +770,9 @@ export function TeamManager({
           <AlertDialogHeader>
             <AlertDialogTitle>Remover {removing?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              A pessoa perde o acesso na hora (as sessões abertas caem e a senha
-              é apagada). O histórico da conta fica guardado.
+              {removing?.existing
+                ? "A pessoa perde só o acesso de equipe. A conta dela continua como está: não é suspensa, a senha não muda e ela segue usando a plataforma como cliente."
+                : "A pessoa perde o acesso na hora (as sessões abertas caem e a senha é apagada). O histórico da conta fica guardado."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

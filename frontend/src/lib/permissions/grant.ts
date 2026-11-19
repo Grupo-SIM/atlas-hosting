@@ -53,7 +53,8 @@ export function normalizeGrant(
   // Áreas que só o master concede: ninguém mais libera, nem outro admin completo.
   if (!opts.master && input.permissions.some(p => isMasterOnlyArea(p.area))) {
     return {
-      error: "Só o administrador master libera a edição de templates.",
+      error:
+        "Só o administrador master libera esta permissão (editar templates e usuários já cadastrados).",
       ok: false,
     };
   }

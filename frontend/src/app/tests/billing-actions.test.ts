@@ -37,13 +37,21 @@ mock.module("@/lib/auth/index", () => ({
   getRealUser: async () => owner,
   getUser: async () => owner,
 }));
+// Mock completo: o `mock.module` vaza para os outros arquivos de teste, e quem importa um export que falta aqui
+// (ex.: `generateAffiliateCode` em Equipe e acessos) quebra com "Export named … not found".
 mock.module("@/lib/auth/utils", () => ({
   authenticateUser: mock(),
   createGuestUser: mock(),
   createSession: mock(),
   createUser: mock(),
+  createUserForOrganization: mock(),
+  generateAffiliateCode: mock(),
   generateSessionToken: mock(),
+  invalidateAllSessions: mock(),
+  invalidateSession: mock(),
   resignupUnverifiedUser: mock(),
+  validateSession: mock(),
+  validateSessionToken: mock(),
 }));
 mock.module("@/auth", () => ({
   auth: mock(),

@@ -54,6 +54,7 @@ export default async function AdminUsersPage() {
 
       {team ? (
         <TeamManager
+          canExisting={team.canExisting}
           levels={team.levels}
           master={team.master}
           rows={team.rows}

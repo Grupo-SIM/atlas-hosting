@@ -33,9 +33,11 @@ mock.module("@/lib/permissions/access", () => ({
 }));
 // O usuário alvo está na equipe do ator (inScope) e a transação de gravação é um no-op.
 mock.module("@/lib/db", () => {
+  // `orgId`/`name`: a conta alvo foi criada pela equipe (organização "Fulano (equipe)").
+  const row = { name: "Fulano (equipe)", orgId: "o1", parent: "master-1" };
   const rows = () =>
-    Object.assign(Promise.resolve([{ parent: "master-1" }]), {
-      limit: () => Promise.resolve([{ parent: "master-1" }]),
+    Object.assign(Promise.resolve([row]), {
+      limit: () => Promise.resolve([row]),
     });
   const tx = {
     delete: () => ({ where: () => Promise.resolve() }),

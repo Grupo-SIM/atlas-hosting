@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getRealUser } from "@/lib/auth/index";
 import { hash } from "@/lib/auth/scrypt";
@@ -94,6 +94,48 @@ const FORBIDDEN: Result = {
   error: "Você não tem permissão para gerenciar usuários.",
   ok: false,
 };
+
+const EXISTING_FORBIDDEN = {
+  error: "Você não tem permissão para dar acesso a usuários já cadastrados.",
+  ok: false as const,
+};
+
+/**
+ * Quem pode mexer em contas que já existiam: o master e os admins a quem o master liberou "Usuários já
+ * cadastrados" (ele também precisa editar Usuários, que é o que abre esta tela).
+ */
+async function existingContext() {
+  const ctx = await actorContext();
+  if (!ctx) return null;
+  const allowed =
+    ctx.master || covers(ctx.levels.admin_users_existing ?? "none", "edit");
+  return allowed ? ctx : null;
+}
+
+const TEAM_ORG = / \(equipe\)$/;
+
+/**
+ * A conta foi criada pela equipe (a organização dela se chama "Nome (equipe)")? Qualquer outra, e na dúvida, é uma
+ * conta que já existia: nome e senha dela não se mexem, e retirar o acesso não suspende a conta.
+ */
+async function createdByTeam(userId: string): Promise<boolean> {
+  try {
+    const [u] = await db
+      .select({ orgId: pgUser.organizationId })
+      .from(pgUser)
+      .where(eq(pgUser.id, userId))
+      .limit(1);
+    if (!u?.orgId) return false;
+    const [o] = await db
+      .select({ name: pgOrganization.name })
+      .from(pgOrganization)
+      .where(eq(pgOrganization.id, u.orgId))
+      .limit(1);
+    return TEAM_ORG.test(o?.name ?? "");
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Grava o modo de validação da pessoa. Só o master, só quem tem "Editar templates" (sem essa permissão o modo não
@@ -231,22 +273,30 @@ export async function updateTeamUserAction(
   if (!(await inScope(ctx, userId))) {
     return { error: "Usuário não encontrado na sua equipe.", ok: false };
   }
-  const basics = checkBasics(input, false);
+  // Conta que já existia: só quem tem "Usuários já cadastrados" mexe nos acessos dela, e nome e senha ficam como estão.
+  const own = await createdByTeam(userId);
+  if (!own && !(await existingContext())) return EXISTING_FORBIDDEN;
+  const basics = checkBasics(
+    own ? input : { ...input, name: "Conta existente", password: "" },
+    false
+  );
   if (basics) return { error: basics, ok: false };
   const grant = normalizeGrant(input, ctx.levels, { master: ctx.master });
   if (!grant.ok) return grant;
 
-  const password = input.password ? await hash(input.password) : null;
+  const password = own && input.password ? await hash(input.password) : null;
   try {
     await db.transaction(async tx => {
-      await tx
-        .update(pgUser)
-        .set({
-          name: input.name.trim(),
-          updatedAt: new Date(),
-          ...(password ? { password } : {}),
-        })
-        .where(eq(pgUser.id, userId));
+      if (own) {
+        await tx
+          .update(pgUser)
+          .set({
+            name: input.name.trim(),
+            updatedAt: new Date(),
+            ...(password ? { password } : {}),
+          })
+          .where(eq(pgUser.id, userId));
+      }
       await tx
         .update(pgUserAccess)
         .set({
@@ -301,12 +351,156 @@ export async function updateTeamUserAction(
   return failed ? { error: failed, ok: false } : { ok: true };
 }
 
+export interface ExistingUserHit {
+  email: string;
+  id: string;
+  name: string;
+}
+
+/** Procura contas que já existem (por nome ou e-mail) e ainda não têm acesso de equipe. */
+export async function searchExistingUsersAction(
+  query: string
+): Promise<
+  { ok: true; users: ExistingUserHit[] } | { error: string; ok: false }
+> {
+  const ctx = await existingContext();
+  if (!ctx) return { error: EXISTING_FORBIDDEN.error, ok: false };
+  const q = typeof query === "string" ? query.trim() : "";
+  if (q.length < 2 || q.length > 100) {
+    return {
+      error: "Digite ao menos 2 letras do nome ou do e-mail.",
+      ok: false,
+    };
+  }
+  const like = `%${q.replace(/[\\%_]/g, m => `\\${m}`)}%`;
+  try {
+    const users = await db
+      .select({ email: pgUser.email, id: pgUser.id, name: pgUser.name })
+      .from(pgUser)
+      .where(
+        and(
+          isNull(pgUser.deletedAt),
+          isNull(pgUser.suspendedAt),
+          eq(pgUser.isAdmin, false),
+          ne(pgUser.id, ctx.actor.id),
+          or(ilike(pgUser.name, like), ilike(pgUser.email, like)),
+          sql`not exists (select 1 from user_access ua where ua.user_id = ${pgUser.id})`
+        )
+      )
+      .orderBy(pgUser.name)
+      .limit(15);
+    return { ok: true, users };
+  } catch (error) {
+    console.error("[equipe] falha ao procurar usuários:", error);
+    return { error: "Não foi possível procurar agora.", ok: false };
+  }
+}
+
+export interface ExistingGrantInput extends GrantInput {
+  validation?: ValidationMode;
+}
+
+/**
+ * Dá acesso de equipe a uma conta que já existe (cliente ou outra pessoa), sem criar conta nem mexer em nome e
+ * senha. As mesmas regras valem: ninguém concede mais do que tem, e o que só o master libera continua só dele.
+ */
+export async function grantExistingUserAction(
+  userId: string,
+  input: ExistingGrantInput
+): Promise<Result> {
+  const ctx = await existingContext();
+  if (!ctx) return EXISTING_FORBIDDEN;
+  const grant = normalizeGrant(input, ctx.levels, { master: ctx.master });
+  if (!grant.ok) return grant;
+  if (typeof userId !== "string" || userId === ctx.actor.id) {
+    return { error: "Escolha outra pessoa.", ok: false };
+  }
+  try {
+    const [target] = await db
+      .select({
+        deletedAt: pgUser.deletedAt,
+        id: pgUser.id,
+        isAdmin: pgUser.isAdmin,
+        suspendedAt: pgUser.suspendedAt,
+      })
+      .from(pgUser)
+      .where(eq(pgUser.id, userId))
+      .limit(1);
+    if (!target || target.deletedAt || target.suspendedAt) {
+      return { error: "Usuário não encontrado.", ok: false };
+    }
+    if (target.isAdmin) {
+      return {
+        error: "Esta conta já é de administrador completo.",
+        ok: false,
+      };
+    }
+    const [already] = await db
+      .select({ id: pgUserAccess.userId })
+      .from(pgUserAccess)
+      .where(eq(pgUserAccess.userId, userId))
+      .limit(1);
+    if (already) {
+      return {
+        error: "Esta pessoa já tem acesso de equipe: edite na lista.",
+        ok: false,
+      };
+    }
+    await db.transaction(async tx => {
+      await tx.insert(pgUserAccess).values({
+        accessAll: grant.value.accessAll,
+        parentUserId: ctx.actor.id,
+        profile: grant.value.profile,
+        userId,
+      });
+      if (grant.value.permissions.length > 0) {
+        await tx.insert(pgUserAreaPermission).values(
+          grant.value.permissions.map(p => ({
+            area: p.area,
+            level: p.level,
+            userId,
+          }))
+        );
+      }
+    });
+  } catch (error) {
+    console.error("[equipe] falha ao dar acesso a conta existente:", error);
+    return { error: "Não foi possível dar o acesso.", ok: false };
+  }
+  const failed = await saveValidation(
+    ctx,
+    userId,
+    grant.value.permissions.some(p => p.area === "admin_templates"),
+    input.validation
+  );
+  revalidatePath(PATH);
+  return failed ? { error: failed, ok: false } : { ok: true };
+}
+
 /** Remove o acesso: derruba as sessões, tira a senha e as permissões, e suspende a conta (o histórico fica). */
 export async function removeTeamUserAction(userId: string): Promise<Result> {
   const ctx = await actorContext();
   if (!ctx) return FORBIDDEN;
   if (!(await inScope(ctx, userId))) {
     return { error: "Usuário não encontrado na sua equipe.", ok: false };
+  }
+  // Conta que já existia: retirar o acesso só tira as permissões de equipe. A conta continua a mesma (sem suspender,
+  // sem apagar a senha nem derrubar as sessões), porque a pessoa segue sendo cliente.
+  if (!(await createdByTeam(userId))) {
+    if (!(await existingContext())) return EXISTING_FORBIDDEN;
+    try {
+      await db.transaction(async tx => {
+        await tx
+          .delete(pgUserAreaPermission)
+          .where(eq(pgUserAreaPermission.userId, userId));
+        await tx.delete(pgUserAccess).where(eq(pgUserAccess.userId, userId));
+      });
+    } catch (error) {
+      console.error("[equipe] falha ao retirar o acesso:", error);
+      return { error: "Não foi possível retirar o acesso.", ok: false };
+    }
+    revalidatePath(PATH);
+    return { ok: true };
   }
   try {
     // Quem foi criado por esta pessoa fica sem responsável, mas continua com o próprio acesso.
@@ -337,6 +531,8 @@ export async function removeTeamUserAction(userId: string): Promise<Result> {
 export interface TeamUserRow {
   accessAll: AreaLevel | null;
   email: string;
+  /** Conta que já existia antes de entrar na equipe (nome e senha não se mexem; retirar o acesso não a suspende). */
+  existing: boolean;
   id: string;
   name: string;
   parentName: string | null;
@@ -349,6 +545,8 @@ export interface TeamUserRow {
 
 /** Equipe visível para quem chama: admin completo vê toda; usuário de equipe vê só quem criou (e a árvore dele). */
 export async function listTeamUsers(): Promise<{
+  /** Quem está vendo pode dar acesso a contas que já existem. */
+  canExisting: boolean;
   levels: Record<string, Level>;
   /** Quem está vendo é o admin master (único que escolhe como validar as alterações dos admins). */
   master: boolean;
@@ -392,6 +590,20 @@ export async function listTeamUsers(): Promise<{
             )
           )
       : [];
+    const teamOrgs = new Set<string>();
+    if (visible.length > 0) {
+      const orgs = await db
+        .select({ id: pgUser.id, name: pgOrganization.name })
+        .from(pgUser)
+        .innerJoin(pgOrganization, eq(pgOrganization.id, pgUser.organizationId))
+        .where(
+          inArray(
+            pgUser.id,
+            visible.map(r => r.id)
+          )
+        );
+      for (const o of orgs) if (TEAM_ORG.test(o.name)) teamOrgs.add(o.id);
+    }
     const modes = await Promise.all(
       visible.map(async r =>
         perms.some(p => p.userId === r.id && p.area === "admin_templates")
@@ -400,11 +612,14 @@ export async function listTeamUsers(): Promise<{
       )
     );
     return {
+      canExisting:
+        ctx.master || covers(ctx.levels.admin_users_existing ?? "none", "edit"),
       levels: ctx.levels,
       master: ctx.master,
       rows: visible.map((r, i) => ({
         accessAll: r.accessAll,
         email: r.email,
+        existing: !teamOrgs.has(r.id),
         id: r.id,
         name: r.name,
         parentName: r.parentUserId
@@ -421,6 +636,11 @@ export async function listTeamUsers(): Promise<{
   } catch (error) {
     // Tabelas ainda não criadas: a tela mostra a lista vazia em vez de cair.
     console.error("[equipe] não foi possível listar a equipe:", error);
-    return { levels: ctx.levels, master: ctx.master, rows: [] };
+    return {
+      canExisting: false,
+      levels: ctx.levels,
+      master: ctx.master,
+      rows: [],
+    };
   }
 }
