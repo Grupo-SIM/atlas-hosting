@@ -2,7 +2,7 @@ export interface PaymentDeclinedInvoice {
   id: string;
   orgId: string;
   reference: string;
-  type: "subscription" | "domain" | "vps";
+  type: "subscription" | "domain" | "vps" | "cart";
 }
 
 export interface PaymentDeclinedRepository {

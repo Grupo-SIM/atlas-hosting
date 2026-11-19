@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { loadMoreDomainSuggestions } from "@/app/(auth)/domain/actions";
 import type { DomainWithAvailability } from "@/app/(auth)/domain/types";
+import { AddDomainToCartButton } from "@/components/cart/AddToCartButtons";
 import { Button } from "@/components/ui/button";
 import { toBrl } from "@/lib/utils";
 
@@ -66,18 +67,25 @@ export function DomainSuggestionsClient({
               </div>
             </div>
             {domain.available && (
-              <Button
-                asChild
-                className="h-7 shrink-0 px-2 text-xs"
-                size="sm"
-                variant="outline"
-              >
-                <Link
-                  href={`/domain?domain=${encodeURIComponent(domain.domain)}&returnTo=${encodeURIComponent(returnTo || "/home")}`}
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Button
+                  asChild
+                  className="h-7 shrink-0 px-2 text-xs"
+                  size="sm"
+                  variant="outline"
                 >
-                  Registrar
-                </Link>
-              </Button>
+                  <Link
+                    href={`/domain?domain=${encodeURIComponent(domain.domain)}&returnTo=${encodeURIComponent(returnTo || "/home")}`}
+                  >
+                    Registrar
+                  </Link>
+                </Button>
+                <AddDomainToCartButton
+                  appearance="app-icon"
+                  domain={domain.domain}
+                  priceBrl={domain.priceBRL}
+                />
+              </div>
             )}
           </div>
         ))}

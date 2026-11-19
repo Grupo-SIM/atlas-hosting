@@ -28,6 +28,7 @@ export const pgInvoice = pgTable("invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
   metadata: json("metadata")
     .$type<
+      | CartInvoiceOptions
       | DomainRegisterInvoiceOptions
       | SitePublishInvoiceOptions
       | TemplateExclusivityInvoiceOptions
@@ -43,7 +44,10 @@ export const pgInvoice = pgTable("invoices", {
   status: text("status", {
     enum: ["pending", "paid", "failed", "processing", "expired"],
   }).notNull(),
-  type: text("type", { enum: ["subscription", "domain", "vps"] }).notNull(),
+  // "cart": pedido do carrinho. Coluna é text sem CHECK no banco — valor novo não exige migration.
+  type: text("type", {
+    enum: ["subscription", "domain", "vps", "cart"],
+  }).notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
   userId: uuid("user_id")
     .notNull()
@@ -110,7 +114,38 @@ export type DomainRegisterInvoiceOptions = Pick<
   namecheapCostUsd?: number;
   /** Resultado da última tentativa de registro na Namecheap (persistido para auditoria/reprocesso) */
   domainRegistration?: DomainRegistrationOutcome;
+  /** Item de um pedido do carrinho: só é pago pela fatura `cart` indicada aqui. */
+  cartInvoiceId?: string;
 };
+
+/** Resumo de um item do carrinho, gravado na fatura `cart` para exibir no checkout e nas faturas. */
+export interface CartInvoiceItemSummary {
+  invoiceId: string;
+  kind: "domain" | "vps";
+  label: string;
+  amount: number;
+}
+
+/**
+ * Pedido do carrinho: uma fatura `cart` paga de uma vez as faturas-filhas
+ * (`domain` / `vps`), que continuam sendo entregues pelos fluxos de sempre
+ * (registro na Namecheap, assinatura + provisionamento da VPS).
+ */
+export interface CartInvoiceOptions
+  extends Omit<DomainRegisterInvoiceOptions, "cartInvoiceId"> {
+  cart: {
+    childInvoiceIds: string[];
+    items: CartInvoiceItemSummary[];
+  };
+  /** Reserva da entrega dos itens; evita que webhook, polling e cron entreguem em paralelo. */
+  cartSettlementStartedAt?: string;
+  /** Resultado da entrega, por fatura-filha. */
+  cartFulfillment?: {
+    delivered: string[];
+    failed: string[];
+    at: string;
+  };
+}
 
 export interface DomainRegistrationOutcome {
   status: "success" | "partial" | "failed";
@@ -204,4 +239,6 @@ export interface VpsInvoiceOptions {
   guestCheckout?: boolean;
   guestPassword?: string;
   priceBreakdown?: Record<string, number>;
+  /** Item de um pedido do carrinho: só é pago pela fatura `cart` indicada aqui. */
+  cartInvoiceId?: string;
 }

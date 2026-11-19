@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
+import { AddVpsToCartButton } from "@/components/cart/AddToCartButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -1520,7 +1521,7 @@ export default function VdsConfigurePage({
               return (
                 <div
                   className={cn(
-                    "hidden relative flex cursor-pointer items-center justify-between overflow-hidden rounded-xl border p-5 shadow-xl backdrop-blur-md transition-all",
+                    "relative flex hidden cursor-pointer items-center justify-between overflow-hidden rounded-xl border p-5 shadow-xl backdrop-blur-md transition-all",
                     qty > 0
                       ? embedded
                         ? "border-sky-500 bg-accent"
@@ -1680,87 +1681,109 @@ export default function VdsConfigurePage({
                     .filter(
                       (img: any) =>
                         ![
-                          "cpanel", "plesk-win", "n8n", "wireguard",
-                          "nextcloud", "gitlab", "docker", "lamp",
-                          "openclaw", "ipfs", "flux", "horizen", "deepseek",
+                          "cpanel",
+                          "plesk-win",
+                          "n8n",
+                          "wireguard",
+                          "nextcloud",
+                          "gitlab",
+                          "docker",
+                          "lamp",
+                          "openclaw",
+                          "ipfs",
+                          "flux",
+                          "horizen",
+                          "deepseek",
                         ].includes(img.id)
                     )
                     .map((img: any) => (
-                    <button
-                      className={cn(
-                        "group relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-xl border p-4 transition-all",
-                        osImage === img.id
-                          ? "border-sky-500 bg-sky-500/10 shadow-[0_0_20px_rgba(0,163,255,0.1)]"
-                          : `border-white/5 ${embedded ? "bg-card/40 hover:border-border hover:bg-card/60" : "bg-[#000B12]/40 hover:border-white/10 hover:bg-[#000B12]/60"}`
-                      )}
-                      key={img.id}
-                      onClick={() => {
-                        if (
-                          img.id === "plesk-win" ||
-                          (img.name.toLowerCase().includes("plesk") &&
-                            img.name.toLowerCase().includes("windows"))
-                        ) {
-                          setShowPleskWindowsModal(true);
-                        } else if (img.name.toLowerCase().includes("ubuntu")) {
-                          setShowUbuntuModal(true);
-                        } else if (img.id === "custom") {
-                          setShowCustomModal(true);
-                        } else if (img.name.toLowerCase().includes("windows")) {
-                          setShowWindowsModal(true);
-                        } else if (img.name.toLowerCase().includes("cpanel")) {
-                          setShowCpanelModal(true);
-                        } else if (img.name.toLowerCase().includes("rhel")) {
-                          setShowRhelModal(true);
-                        } else if (img.name.toLowerCase().includes("plesk")) {
-                          setShowPleskModal(true);
-                        } else if (img.name.toLowerCase().includes("debian")) {
-                          setShowDebianModal(true);
-                        } else if (img.name.toLowerCase().includes("docker")) {
-                          setShowDockerModal(true);
-                        } else if (img.name.toLowerCase().includes("lamp")) {
-                          setShowLampModal(true);
-                        } else if (img.name.toLowerCase().includes("webmin")) {
-                          setShowWebminModal(true);
-                        }
-                        setOsImage(img.id);
-                      }}
-                    >
-                      <div
-                        className={`h-8 w-8 rounded-full ${embedded ? "bg-muted" : "bg-white/10"} flex items-center justify-center overflow-hidden`}
-                      >
-                        {img.icon ? (
-                          <img
-                            alt=""
-                            className="h-5 w-5 object-contain"
-                            src={img.icon}
-                          />
-                        ) : (
-                          <Server
-                            className={
-                              embedded
-                                ? "text-muted-foreground"
-                                : "text-slate-400"
-                            }
-                            size={16}
-                          />
+                      <button
+                        className={cn(
+                          "group relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-xl border p-4 transition-all",
+                          osImage === img.id
+                            ? "border-sky-500 bg-sky-500/10 shadow-[0_0_20px_rgba(0,163,255,0.1)]"
+                            : `border-white/5 ${embedded ? "bg-card/40 hover:border-border hover:bg-card/60" : "bg-[#000B12]/40 hover:border-white/10 hover:bg-[#000B12]/60"}`
                         )}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p
-                          className={`font-black text-[14px] ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}
+                        key={img.id}
+                        onClick={() => {
+                          if (
+                            img.id === "plesk-win" ||
+                            (img.name.toLowerCase().includes("plesk") &&
+                              img.name.toLowerCase().includes("windows"))
+                          ) {
+                            setShowPleskWindowsModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("ubuntu")
+                          ) {
+                            setShowUbuntuModal(true);
+                          } else if (img.id === "custom") {
+                            setShowCustomModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("windows")
+                          ) {
+                            setShowWindowsModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("cpanel")
+                          ) {
+                            setShowCpanelModal(true);
+                          } else if (img.name.toLowerCase().includes("rhel")) {
+                            setShowRhelModal(true);
+                          } else if (img.name.toLowerCase().includes("plesk")) {
+                            setShowPleskModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("debian")
+                          ) {
+                            setShowDebianModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("docker")
+                          ) {
+                            setShowDockerModal(true);
+                          } else if (img.name.toLowerCase().includes("lamp")) {
+                            setShowLampModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("webmin")
+                          ) {
+                            setShowWebminModal(true);
+                          }
+                          setOsImage(img.id);
+                        }}
+                      >
+                        <div
+                          className={`h-8 w-8 rounded-full ${embedded ? "bg-muted" : "bg-white/10"} flex items-center justify-center overflow-hidden`}
                         >
-                          {img.name}
-                        </p>
-                        <p className="font-black text-[13px] text-sky-400">
-                          {typeof img.price === "number"
-                            ? formatBRLPerMonth(img.price)
-                            : img.eur
-                              ? formatBRLPerMonth(img.eur)
-                              : img.price}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                          {img.icon ? (
+                            <img
+                              alt=""
+                              className="h-5 w-5 object-contain"
+                              src={img.icon}
+                            />
+                          ) : (
+                            <Server
+                              className={
+                                embedded
+                                  ? "text-muted-foreground"
+                                  : "text-slate-400"
+                              }
+                              size={16}
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p
+                            className={`font-black text-[14px] ${embedded ? "text-foreground" : "text-white"} uppercase tracking-tight`}
+                          >
+                            {img.name}
+                          </p>
+                          <p className="font-black text-[13px] text-sky-400">
+                            {typeof img.price === "number"
+                              ? formatBRLPerMonth(img.price)
+                              : img.eur
+                                ? formatBRLPerMonth(img.eur)
+                                : img.price}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
                 </div>
               </motion.div>
             ) : (
@@ -2415,6 +2438,14 @@ export default function VdsConfigurePage({
                         </span>
                       </div>
                     </div>
+                    <AddVpsToCartButton
+                      checkoutHref={`/checkout/personal-data?planId=${id}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&monitoring=${monitoring}&privateNetwork=${privateNetwork}&ipv4Address=${ipv4Address}&objectStorage=${objectStorage}&password=${encodeURIComponent(password)}&type=vds&storageUpgrades=${encodeURIComponent(JSON.stringify(storageUpgrades))}`}
+                      disabled={!isPasswordValid(password)}
+                      embedded={embedded}
+                      label={plan.name}
+                      planId={id as string}
+                      priceBrl={totalBrl}
+                    />
                     <Button
                       className={cn(
                         "h-9 min-w-0 rounded-lg px-3 font-black text-sm uppercase tracking-widest shadow-xl transition-all md:h-14 md:min-w-[180px] md:px-12 md:text-xl",
@@ -2474,11 +2505,11 @@ export default function VdsConfigurePage({
                 em Linux.
               </p>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-base ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Versão
-                </label>
+                </span>
                 <Select onValueChange={setUbuntuVersion} value={ubuntuVersion}>
                   <SelectTrigger
                     className={`h-14 rounded-xl ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"}`}
@@ -2531,11 +2562,11 @@ export default function VdsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-base ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Licença
-                </label>
+                </span>
                 <Select onValueChange={setCpanelLicence} value={cpanelLicence}>
                   <SelectTrigger
                     className={`h-14 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"} rounded-xl`}
@@ -2647,11 +2678,11 @@ export default function VdsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-base ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Edição
-                </label>
+                </span>
                 <Select onValueChange={setPleskLicence} value={pleskLicence}>
                   <SelectTrigger
                     className={`h-14 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"} rounded-xl`}
@@ -2760,11 +2791,11 @@ export default function VdsConfigurePage({
               </div>
               <div className="space-y-6">
                 <div className="space-y-4">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Edição
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setPleskWinLicence}
                     value={pleskWinLicence}
@@ -2839,11 +2870,11 @@ export default function VdsConfigurePage({
                 </div>
 
                 <div className="space-y-4">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Versão do Windows
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setPleskWinVersion}
                     value={pleskWinVersion}
@@ -2928,11 +2959,11 @@ export default function VdsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Versão
-                </label>
+                </span>
                 <Select
                   onValueChange={setWindowsVersion}
                   value={windowsVersion}

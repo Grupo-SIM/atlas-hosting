@@ -1,11 +1,19 @@
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   isBoletoEligibleForVpsConfig,
+  isBoletoEnabledGlobally,
   isPixEligibleForVpsConfig,
 } from "@/app/actions";
 import { getOptionalUser } from "@/lib/auth";
+import {
+  cartAllowsBoleto,
+  cartAllowsPix,
+  cartDataOf,
+  cartParentIdOf,
+  loadCartChildren,
+} from "@/lib/cart/invoice";
 import { db } from "@/lib/db";
 import { type Invoice, pgInvoice, pgPlan } from "@/lib/db/schema";
 import { isExclusivityInvoice } from "@/lib/template-exclusivity/shared";
@@ -53,6 +61,18 @@ export default async function CheckoutPage({
     notFound();
   }
 
+  // Item de pedido do carrinho: o pagamento é do pedido inteiro.
+  const cartParentId = cartParentIdOf(invoice);
+  if (cartParentId) {
+    const parent = await db.query.pgInvoice.findFirst({
+      columns: { id: true, status: true },
+      where: eq(pgInvoice.id, cartParentId),
+    });
+    if (parent && parent.status !== "paid" && parent.status !== "expired") {
+      redirect(`/checkout/${parent.id}`);
+    }
+  }
+
   if (invoice.status === "expired" || invoice.status === "paid") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#000B12]">
@@ -91,16 +111,44 @@ export default async function CheckoutPage({
   const initialStep =
     resolvedSearch.initialStep === "payment" ? "payment" : "billing";
 
+  if (cartParentId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#000B12]">
+        <div className="space-y-4 px-6 text-center">
+          <p className="font-black text-2xl text-white">Item de um pedido</p>
+          <p className="text-slate-400">
+            Este item faz parte de um pedido do carrinho que não está mais
+            aberto para pagamento.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const invoiceConfig = (invoice.metadata as any)?.config || {};
-  const isAnnualVps =
+  let isAnnualVps =
     invoice.type === "vps" && (await isPixEligibleForVpsConfig(invoiceConfig));
-  const allowBoleto = await isBoletoEligibleForVpsConfig(
+  let allowBoleto = await isBoletoEligibleForVpsConfig(
     invoice.type === "vps" ? invoiceConfig : {}
   );
+
+  const cartData = cartDataOf(invoice);
+  if (cartData) {
+    const children = await loadCartChildren(invoice);
+    // `isAnnualVps` libera o PIX no formulário; no pedido vale se valer para cada VPS.
+    isAnnualVps = await cartAllowsPix(children, isPixEligibleForVpsConfig);
+    allowBoleto = await cartAllowsBoleto(
+      children,
+      isBoletoEligibleForVpsConfig,
+      isBoletoEnabledGlobally
+    );
+    reference = invoice.description || "Pedido do carrinho";
+  }
 
   return (
     <CheckoutClient
       allowBoleto={allowBoleto}
+      cartItems={cartData?.items}
       initialStep={initialStep}
       invoice={invoice as Invoice}
       isAnnualVps={isAnnualVps}

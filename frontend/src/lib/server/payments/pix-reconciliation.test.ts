@@ -49,13 +49,52 @@ describe("PIX domain reconciliation candidate", () => {
         pixCreatedAt: "2026-08-13T17:25:00-03:00",
       },
     });
-    expect(shouldReconcilePixDomainInvoice(pending, new Date("2026-08-13T19:19:00-03:00"))).toBe(true);
+    expect(
+      shouldReconcilePixDomainInvoice(
+        pending,
+        new Date("2026-08-13T19:19:00-03:00")
+      )
+    ).toBe(true);
     // A confirmação pode chegar depois do vencimento local da fatura.
-    expect(shouldReconcilePixDomainInvoice({ ...pending, status: "expired" }, new Date("2026-08-14T19:19:00-03:00"))).toBe(true);
+    expect(
+      shouldReconcilePixDomainInvoice(
+        { ...pending, status: "expired" },
+        new Date("2026-08-14T19:19:00-03:00")
+      )
+    ).toBe(true);
   });
 
   test("reconciles VPS renewal without an open checkout", () => {
-    expect(shouldReconcilePixDomainInvoice(invoice({ type: "vps", metadata: { ...invoice().metadata, vpsId: "4", config: { duration: "1" }, isRenewal: true, subscriptionId: "sub" } }), now)).toBe(true);
+    expect(
+      shouldReconcilePixDomainInvoice(
+        invoice({
+          metadata: {
+            ...invoice().metadata,
+            config: { duration: "1" },
+            isRenewal: true,
+            subscriptionId: "sub",
+            vpsId: "4",
+          },
+          type: "vps",
+        }),
+        now
+      )
+    ).toBe(true);
+  });
+
+  test("reconciles a cart order paid by PIX after the checkout closes", () => {
+    expect(
+      shouldReconcilePixDomainInvoice(
+        invoice({
+          metadata: {
+            ...invoice().metadata,
+            cart: { childInvoiceIds: ["a", "b"], items: [] },
+          },
+          type: "cart",
+        }),
+        now
+      )
+    ).toBe(true);
   });
 
   test("waits thirty seconds before the server reconciliation starts", () => {
@@ -74,10 +113,12 @@ describe("PIX domain reconciliation candidate", () => {
     expect(
       shouldReconcilePixDomainInvoice(invoice({ status: "paid" }), now)
     ).toBe(false);
-    expect(shouldReconcilePixDomainInvoice(invoice({ type: "vps" }), now)).toBe(false);
-    expect(shouldReconcilePixDomainInvoice(invoice({ type: "subscription" }), now)).toBe(
+    expect(shouldReconcilePixDomainInvoice(invoice({ type: "vps" }), now)).toBe(
       false
     );
+    expect(
+      shouldReconcilePixDomainInvoice(invoice({ type: "subscription" }), now)
+    ).toBe(false);
     expect(
       shouldReconcilePixDomainInvoice(
         invoice({ metadata: { ...invoice().metadata, isRenewal: true } }),

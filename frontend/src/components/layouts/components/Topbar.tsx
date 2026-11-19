@@ -3,6 +3,7 @@ import { User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { type HTMLAttributes, type PropsWithChildren, Suspense } from "react";
 import { FaUserAlt } from "react-icons/fa";
+import { CartButton } from "@/components/cart/CartButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +58,7 @@ export default async function Topbar({
       <div className="flex flex-1 items-center justify-end gap-3">
         {children}
         <ThemeToggleSlot />
+        <CartButton />
         <NotificationBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild={true}>

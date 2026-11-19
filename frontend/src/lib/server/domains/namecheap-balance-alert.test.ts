@@ -34,6 +34,50 @@ describe("Namecheap low balance alert", () => {
     expect(result).toEqual({ ok: true });
   });
 
+  test("cart order: skips the check without domains and blocks when domains exceed the balance", async () => {
+    let balanceReads = 0;
+    const reader = {
+      getBalances: async () => {
+        balanceReads++;
+        return {
+          AccountBalance: 20,
+          AvailableBalance: 20,
+          Currency: "USD",
+          EarnedAmount: 0,
+          FundsRequiredForAutoRenew: 0,
+          WithdrawableAmount: 0,
+        };
+      },
+    };
+    const onlyVps = await validateNamecheapFundsForPayment(
+      {
+        metadata: {
+          cart: { childInvoiceIds: ["v"], items: [{ kind: "vps" }] },
+        },
+        type: "cart",
+      } as any,
+      reader
+    );
+    expect(onlyVps).toEqual({ ok: true });
+    expect(balanceReads).toBe(0);
+
+    const withDomains = await validateNamecheapFundsForPayment(
+      {
+        metadata: {
+          cart: {
+            childInvoiceIds: ["d", "v"],
+            items: [{ kind: "domain" }, { kind: "vps" }],
+          },
+          namecheapCostUsd: 30,
+        },
+        type: "cart",
+      } as any,
+      reader,
+      { notify: async () => {} }
+    );
+    expect(withDomains.ok).toBe(false);
+  });
+
   test("blocks payment when available balance does not cover the cost", async () => {
     const notifications: Array<{
       availableBalance: number;

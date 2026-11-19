@@ -14,8 +14,15 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { Invoice } from "@/lib/db/schema";
+import type { CartInvoiceOptions, Invoice } from "@/lib/db/schema";
 import { cn, toBrl } from "@/lib/utils";
+
+function invoiceTypeLabel(type: Invoice["type"]): string {
+  if (type === "domain") return "Domínio";
+  if (type === "vps") return "VPS";
+  if (type === "cart") return "Carrinho";
+  return "Plano";
+}
 
 export interface InvoiceCustomer {
   name: string | null;
@@ -56,6 +63,13 @@ export default function InvoiceCard({
     : [];
 
   const breakdownInformation = (() => {
+    if (invoice.type === "cart") {
+      const items = (invoice.metadata as Partial<CartInvoiceOptions>)?.cart
+        ?.items;
+      if (items?.length)
+        return items.map(item => ({ label: item.label, value: item.amount }));
+    }
+
     if (invoice.type === "subscription") {
       const isExclusivity = Boolean(
         (invoice.metadata as { templateExclusivity?: unknown } | null)
@@ -142,15 +156,13 @@ export default function InvoiceCard({
                         ? "border-indigo-500/20 bg-indigo-500/10 text-indigo-400"
                         : invoice.type === "vps"
                           ? "border-blue-500/20 bg-blue-600/10 text-blue-500"
-                          : "border-cyan-500/20 bg-cyan-500/10 text-cyan-400"
+                          : invoice.type === "cart"
+                            ? "border-amber-500/20 bg-amber-500/10 text-amber-500"
+                            : "border-cyan-500/20 bg-cyan-500/10 text-cyan-400"
                     )}
                     variant="outline"
                   >
-                    {invoice.type === "domain"
-                      ? "Domínio"
-                      : invoice.type === "vps"
-                        ? "VPS"
-                        : "Plano"}
+                    {invoiceTypeLabel(invoice.type)}
                   </Badge>
                   <Badge
                     className={cn(
@@ -286,11 +298,7 @@ export default function InvoiceCard({
                     Tipo de produto:
                   </span>
                   <Badge variant="outline">
-                    {invoice.type === "domain"
-                      ? "Domínio"
-                      : invoice.type === "vps"
-                        ? "VPS"
-                        : "Plano"}
+                    {invoiceTypeLabel(invoice.type)}
                   </Badge>
                 </div>
               </div>

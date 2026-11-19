@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Footer } from "@/app/landing/components/Footer";
 import { Navbar } from "@/app/landing/components/Navbar";
+import { checkIsAuthenticated } from "@/lib/auth";
 import DomainSearchResults from "./components/DomainSearchResults";
 import LoadingState from "./components/LoadingState";
 import SearchForm from "./components/SearchForm";
@@ -22,6 +23,7 @@ export default async function DomainSearchPage({
 }: SearchPageProps) {
   const resolvedParams = await searchParams;
   const query = resolvedParams.q || "";
+  const isAuthenticated = query ? await checkIsAuthenticated() : false;
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#00050A] selection:bg-sky-500/30">
@@ -60,7 +62,10 @@ export default async function DomainSearchPage({
           <div className="mt-12 md:mt-14">
             {query ? (
               <Suspense fallback={<LoadingState />}>
-                <DomainSearchResults query={query} />
+                <DomainSearchResults
+                  isAuthenticated={isAuthenticated}
+                  query={query}
+                />
               </Suspense>
             ) : (
               <p className="text-center text-base text-slate-400 md:text-lg">

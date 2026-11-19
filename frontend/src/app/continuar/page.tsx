@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { checkIsAuthenticated } from "@/lib/auth";
 
 export const metadata: Metadata = {
   description:
@@ -41,6 +43,7 @@ interface PageProps {
 export default async function ContinuarPage({ searchParams }: PageProps) {
   const { next: nextRaw } = await searchParams;
   const next = sanitizeNext(nextRaw);
+  if (await checkIsAuthenticated()) redirect(next);
   const enc = encodeURIComponent(next);
 
   return (

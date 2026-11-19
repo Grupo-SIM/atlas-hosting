@@ -70,7 +70,7 @@ async function releaseStaleSettlementClaims(): Promise<void> {
     .set({ status: "pending", updatedAt: new Date() })
     .where(
       and(
-        inArray(pgInvoice.type, ["domain", "vps"]),
+        inArray(pgInvoice.type, ["domain", "vps", "cart"]),
         sql`(${pgInvoice.type} != 'vps' OR (${pgInvoice.metadata}->>'isRenewal' = 'true' AND ${pgInvoice.metadata}->>'subscriptionId' is not null))`,
         eq(pgInvoice.status, "processing"),
         lte(pgInvoice.updatedAt, staleAt),
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     limit: QUERY_LIMIT,
     orderBy: asc(pgInvoice.updatedAt),
     where: and(
-      inArray(pgInvoice.type, ["domain", "vps"]),
+      inArray(pgInvoice.type, ["domain", "vps", "cart"]),
       sql`(${pgInvoice.type} != 'vps' OR (${pgInvoice.metadata}->>'isRenewal' = 'true' AND ${pgInvoice.metadata}->>'subscriptionId' is not null))`,
       inArray(pgInvoice.status, ["pending", "expired"]),
       sql`${pgInvoice.metadata}->>'simpayPaymentId' is not null`,
@@ -102,7 +102,11 @@ export async function POST(request: Request) {
     .slice(0, PROCESS_LIMIT);
 
   const results: Awaited<ReturnType<typeof reconcileInvoice>>[] = [];
-  for (let offset = 0; offset < candidates.length; offset += PROCESS_CONCURRENCY) {
+  for (
+    let offset = 0;
+    offset < candidates.length;
+    offset += PROCESS_CONCURRENCY
+  ) {
     const batch = candidates.slice(offset, offset + PROCESS_CONCURRENCY);
     results.push(...(await Promise.all(batch.map(reconcileInvoice))));
   }

@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, ne, sql } from "drizzle-orm";
 import { Search } from "lucide-react";
 import {
   Card,
@@ -21,6 +21,7 @@ interface InvoiceStatsProps {
 export async function InvoiceStats({ searchParams }: InvoiceStatsProps) {
   const [statusStats, typeStats, averageAmount, totalInvoices, clients] =
     await Promise.all([
+      // Pedido do carrinho fica de fora das somas: as faturas-filhas já contam cada item.
       db
         .select({
           count: sql<number>`count(*)`,
@@ -28,6 +29,7 @@ export async function InvoiceStats({ searchParams }: InvoiceStatsProps) {
           total: sql<number>`sum(amount)`,
         })
         .from(pgInvoice)
+        .where(ne(pgInvoice.type, "cart"))
         .groupBy(pgInvoice.status),
       db
         .select({
@@ -40,12 +42,14 @@ export async function InvoiceStats({ searchParams }: InvoiceStatsProps) {
         .select({
           avg: sql<number>`avg(amount)`,
         })
-        .from(pgInvoice),
+        .from(pgInvoice)
+        .where(ne(pgInvoice.type, "cart")),
       db
         .select({
           count: sql<number>`count(*)`,
         })
-        .from(pgInvoice),
+        .from(pgInvoice)
+        .where(ne(pgInvoice.type, "cart")),
       // Só clientes que já têm ao menos uma fatura — é o universo relevante pro dropdown de filtro.
       db
         .selectDistinct({

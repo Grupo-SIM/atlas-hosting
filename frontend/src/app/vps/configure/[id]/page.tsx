@@ -24,6 +24,7 @@ const roboto = Roboto({
   weight: ["100", "300", "400", "500", "700", "900"],
 });
 
+import { AddVpsToCartButton } from "@/components/cart/AddToCartButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -2716,85 +2717,107 @@ export default function VpsConfigurePage({
                     .filter(
                       (img: any) =>
                         ![
-                          "cpanel", "plesk-win", "n8n", "wireguard",
-                          "nextcloud", "gitlab", "docker", "lamp",
-                          "openclaw", "ipfs", "flux", "horizen", "deepseek",
+                          "cpanel",
+                          "plesk-win",
+                          "n8n",
+                          "wireguard",
+                          "nextcloud",
+                          "gitlab",
+                          "docker",
+                          "lamp",
+                          "openclaw",
+                          "ipfs",
+                          "flux",
+                          "horizen",
+                          "deepseek",
                         ].includes(img.id)
                     )
                     .map((img: any) => (
-                    <button
-                      className={cn(
-                        `flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
-                        osImage === img.id
-                          ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}`
-                          : `${embedded ? "border-border" : "border-white/10"}`
-                      )}
-                      key={img.id}
-                      onClick={() => {
-                        if (
-                          img.id === "plesk-win" ||
-                          (img.name.toLowerCase().includes("plesk") &&
-                            img.name.toLowerCase().includes("windows"))
-                        ) {
-                          setShowPleskWindowsModal(true);
-                        } else if (img.name.toLowerCase().includes("ubuntu")) {
-                          setShowUbuntuModal(true);
-                        } else if (img.id === "custom") {
-                          setShowCustomModal(true);
-                        } else if (img.name.toLowerCase().includes("windows")) {
-                          setShowWindowsModal(true);
-                        } else if (img.name.toLowerCase().includes("cpanel")) {
-                          setShowCpanelModal(true);
-                        } else if (img.name.toLowerCase().includes("rhel")) {
-                          setShowRhelModal(true);
-                        } else if (img.name.toLowerCase().includes("plesk")) {
-                          setShowPleskModal(true);
-                        } else if (img.name.toLowerCase().includes("debian")) {
-                          setShowDebianModal(true);
-                        } else if (img.name.toLowerCase().includes("docker")) {
-                          setShowDockerModal(true);
-                        } else if (img.name.toLowerCase().includes("lamp")) {
-                          setShowLampModal(true);
-                        } else if (img.name.toLowerCase().includes("webmin")) {
-                          setShowWebminModal(true);
-                        }
-                        setOsImage(img.id);
-                      }}
-                    >
-                      <div
-                        className={`h-8 w-8 rounded-full ${embedded ? "bg-muted/40" : "bg-white/5"} flex items-center justify-center overflow-hidden`}
-                      >
-                        {img.icon ? (
-                          <img
-                            alt=""
-                            className="h-5 w-5 object-contain"
-                            src={img.icon}
-                          />
-                        ) : (
-                          <Server
-                            className={`${embedded ? "text-muted-foreground" : "text-slate-500"}`}
-                            size={16}
-                          />
+                      <button
+                        className={cn(
+                          `flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
+                          osImage === img.id
+                            ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}`
+                            : `${embedded ? "border-border" : "border-white/10"}`
                         )}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p
-                          className={`font-bold text-[15px] ${embedded ? "text-foreground" : "text-white"}`}
+                        key={img.id}
+                        onClick={() => {
+                          if (
+                            img.id === "plesk-win" ||
+                            (img.name.toLowerCase().includes("plesk") &&
+                              img.name.toLowerCase().includes("windows"))
+                          ) {
+                            setShowPleskWindowsModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("ubuntu")
+                          ) {
+                            setShowUbuntuModal(true);
+                          } else if (img.id === "custom") {
+                            setShowCustomModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("windows")
+                          ) {
+                            setShowWindowsModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("cpanel")
+                          ) {
+                            setShowCpanelModal(true);
+                          } else if (img.name.toLowerCase().includes("rhel")) {
+                            setShowRhelModal(true);
+                          } else if (img.name.toLowerCase().includes("plesk")) {
+                            setShowPleskModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("debian")
+                          ) {
+                            setShowDebianModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("docker")
+                          ) {
+                            setShowDockerModal(true);
+                          } else if (img.name.toLowerCase().includes("lamp")) {
+                            setShowLampModal(true);
+                          } else if (
+                            img.name.toLowerCase().includes("webmin")
+                          ) {
+                            setShowWebminModal(true);
+                          }
+                          setOsImage(img.id);
+                        }}
+                      >
+                        <div
+                          className={`h-8 w-8 rounded-full ${embedded ? "bg-muted/40" : "bg-white/5"} flex items-center justify-center overflow-hidden`}
                         >
-                          {img.name}
-                        </p>
-                        <p
-                          className={`text-[14px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium uppercase tracking-wide`}
-                        >
-                          {typeof img.price === "number"
-                            ? formatBRLPerMonth(img.price)
-                            : img.eur
-                              ? formatBRLPerMonth(img.eur)
-                              : img.price}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                          {img.icon ? (
+                            <img
+                              alt=""
+                              className="h-5 w-5 object-contain"
+                              src={img.icon}
+                            />
+                          ) : (
+                            <Server
+                              className={`${embedded ? "text-muted-foreground" : "text-slate-500"}`}
+                              size={16}
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p
+                            className={`font-bold text-[15px] ${embedded ? "text-foreground" : "text-white"}`}
+                          >
+                            {img.name}
+                          </p>
+                          <p
+                            className={`text-[14px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium uppercase tracking-wide`}
+                          >
+                            {typeof img.price === "number"
+                              ? formatBRLPerMonth(img.price)
+                              : img.eur
+                                ? formatBRLPerMonth(img.eur)
+                                : img.price}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
                 </div>
               </motion.div>
             ) : (
@@ -3851,6 +3874,7 @@ export default function VpsConfigurePage({
               const dueToday = (totalMonthly * durationMonths + setupFee) * qty;
               const totalSavings =
                 (totalBaseMonthly - totalMonthly) * durationMonths * qty;
+              const checkoutHref = `/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&storage=${storageType}&image=${osImage}&backup=${autoBackup}&management=${serverManagement}&monitoring=${monitoring}&privateNetwork=${privateNetwork}&ipv4Address=${ipv4Address}&objectStorage=${objectStorage}&password=${encodeURIComponent(password)}&ubuntuVersion=${ubuntuVersion}&windowsVersion=${windowsVersion}&rhelVersion=${rhelVersion}&debianVersion=${debianVersion}&pleskLicence=${pleskLicence}&cpanelLicence=${cpanelLicence}&cpanelVersion=${cpanelVersion}&pleskWinLicence=${pleskWinLicence}&pleskWinVersion=${pleskWinVersion}&webminVersion=${webminVersion}&lampVersion=${lampVersion}&dockerVersion=${dockerVersion}&customImageOption=${customImageOption}`;
 
               return (
                 <>
@@ -3911,6 +3935,14 @@ export default function VpsConfigurePage({
                       </div>
                     </div>
 
+                    <AddVpsToCartButton
+                      checkoutHref={checkoutHref}
+                      disabled={!isPasswordValid(password)}
+                      embedded={embedded}
+                      label={plan.name}
+                      planId={planId}
+                      priceBrl={dueToday}
+                    />
                     <Button
                       className={cn(
                         "h-9 min-w-0 rounded-xl px-3 font-black text-sm uppercase tracking-widest shadow-lg transition-all md:h-14 md:min-w-[180px] md:px-12 md:text-2xl",
@@ -3921,9 +3953,7 @@ export default function VpsConfigurePage({
                       disabled={!isPasswordValid(password)}
                       onClick={() => {
                         if (isPasswordValid(password)) {
-                          router.push(
-                            `/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&storage=${storageType}&image=${osImage}&backup=${autoBackup}&management=${serverManagement}&monitoring=${monitoring}&privateNetwork=${privateNetwork}&ipv4Address=${ipv4Address}&objectStorage=${objectStorage}&password=${encodeURIComponent(password)}&ubuntuVersion=${ubuntuVersion}&windowsVersion=${windowsVersion}&rhelVersion=${rhelVersion}&debianVersion=${debianVersion}&pleskLicence=${pleskLicence}&cpanelLicence=${cpanelLicence}&cpanelVersion=${cpanelVersion}&pleskWinLicence=${pleskWinLicence}&pleskWinVersion=${pleskWinVersion}&webminVersion=${webminVersion}&lampVersion=${lampVersion}&dockerVersion=${dockerVersion}&customImageOption=${customImageOption}`
-                          );
+                          router.push(checkoutHref);
                         }
                       }}
                     >
@@ -3966,11 +3996,11 @@ export default function VpsConfigurePage({
                 forte apoio da comunidade.
               </p>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-black text-sm ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                 >
                   Versão
-                </label>
+                </span>
                 <Select onValueChange={setUbuntuVersion} value={ubuntuVersion}>
                   <SelectTrigger
                     className={`h-14 ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}
@@ -4041,11 +4071,11 @@ export default function VpsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-black text-sm ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                 >
                   Opção
-                </label>
+                </span>
                 <Select
                   onValueChange={setCustomImageOption}
                   value={customImageOption}
@@ -4116,11 +4146,11 @@ export default function VpsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Versão
-                </label>
+                </span>
                 <Select
                   onValueChange={setWindowsVersion}
                   value={windowsVersion}
@@ -4217,11 +4247,11 @@ export default function VpsConfigurePage({
               </div>
               <div className="space-y-6">
                 <div className="space-y-4">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Licença
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setCpanelLicence}
                     value={cpanelLicence}
@@ -4298,11 +4328,11 @@ export default function VpsConfigurePage({
                   </Select>
                 </div>
                 <div className="space-y-4">
-                  <label
+                  <span
                     className={`font-black text-sm ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                   >
                     Sistema Operacional
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setCpanelVersion}
                     value={cpanelVersion}
@@ -4377,11 +4407,11 @@ export default function VpsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Distribuição
-                </label>
+                </span>
                 <Select onValueChange={setRhelVersion} value={rhelVersion}>
                   <SelectTrigger
                     className={`h-14 ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}
@@ -4448,11 +4478,11 @@ export default function VpsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Licença
-                </label>
+                </span>
                 <Select onValueChange={setPleskLicence} value={pleskLicence}>
                   <SelectTrigger
                     className={`h-16 ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}
@@ -4562,11 +4592,11 @@ export default function VpsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Versão
-                </label>
+                </span>
                 <Select onValueChange={setDebianVersion} value={debianVersion}>
                   <SelectTrigger
                     className={`h-14 ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}
@@ -4633,11 +4663,11 @@ export default function VpsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Versão
-                </label>
+                </span>
                 <Select onValueChange={setDockerVersion} value={dockerVersion}>
                   <SelectTrigger
                     className={`h-14 ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}
@@ -4718,11 +4748,11 @@ export default function VpsConfigurePage({
                 </p>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Versão
-                </label>
+                </span>
                 <Select onValueChange={setLampVersion} value={lampVersion}>
                   <SelectTrigger
                     className={`h-14 ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}
@@ -4796,11 +4826,11 @@ export default function VpsConfigurePage({
               </div>
               <div className="space-y-6">
                 <div className="space-y-4">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Licença
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setPleskWinLicence}
                     value={pleskWinLicence}
@@ -4872,11 +4902,11 @@ export default function VpsConfigurePage({
                   </Select>
                 </div>
                 <div className="space-y-4">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Versão Windows
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setPleskWinVersion}
                     value={pleskWinVersion}
@@ -4969,11 +4999,11 @@ export default function VpsConfigurePage({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Versão
-                </label>
+                </span>
                 <Select onValueChange={setWebminVersion} value={webminVersion}>
                   <SelectTrigger
                     className={`h-14 ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "border-border" : "border-white/10"} ${embedded ? "text-foreground" : "text-white"}`}

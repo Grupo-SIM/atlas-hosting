@@ -9,6 +9,7 @@ import { InvoiceClientFilter } from "@/app/(auth)/admin/components/InvoiceClient
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getRealUser, getUser } from "@/lib/auth";
+import { isCartChildInvoice } from "@/lib/cart/invoice";
 import { db } from "@/lib/db";
 import { pgInvoice, pgUser } from "@/lib/db/schema";
 import { BillingFilters } from "./_/filters";
@@ -137,14 +138,17 @@ export default async function BillingPage({
 
   const plans = groupBy(await db.query.pgPlan.findMany(), "id");
 
-  const processedInvoices = allInvoices.map(invoice => {
-    if (invoice.type === "domain") return invoice;
-    const plan = plans[invoice.reference]?.[0];
-    return {
-      ...invoice,
-      reference: plan ? plan.name : invoice.reference,
-    };
-  });
+  // Itens de pedido do carrinho ficam dentro da fatura do pedido, não como faturas soltas.
+  const processedInvoices = allInvoices
+    .filter(invoice => !isCartChildInvoice(invoice))
+    .map(invoice => {
+      if (invoice.type === "domain" || invoice.type === "cart") return invoice;
+      const plan = plans[invoice.reference]?.[0];
+      return {
+        ...invoice,
+        reference: plan ? plan.name : invoice.reference,
+      };
+    });
 
   // Apply filters
   const filteredInvoices = processedInvoices.filter(invoice => {

@@ -2,7 +2,7 @@ export interface SignatureCancellationInvoice {
   id: string;
   orgId: string;
   reference: string;
-  type: "subscription" | "domain" | "vps";
+  type: "subscription" | "domain" | "vps" | "cart";
 }
 
 export interface SignatureCancellationRepository {

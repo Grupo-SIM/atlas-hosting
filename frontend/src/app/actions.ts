@@ -32,6 +32,16 @@ import type { SavedCard } from "@/components/checkout/ModernCheckoutForm";
 import { recordAttribution } from "@/lib/affiliate/attribution";
 import { triggerCommissionIfApplicable } from "@/lib/affiliate/commission";
 import { secureCookie } from "@/lib/auth/secure-cookie";
+import {
+  CART_CHILD_PAYMENT_ERROR,
+  cartAllowsBoleto,
+  cartAllowsPix,
+  cartDataOf,
+  cartHasDomains,
+  isCartChildInvoice,
+  loadCartChildren,
+  splitCartDiscount,
+} from "@/lib/cart/invoice";
 import { DEFAULT_POST_LOGIN_PATH } from "@/lib/consts/default-auth-path";
 import { provisionPaidVps } from "@/lib/contabo";
 import { completeProvisioningConfiguration } from "@/lib/contabo/link-configuration";
@@ -1195,6 +1205,10 @@ async function settleNonCardInvoice(
 ): Promise<boolean> {
   const logPrefix = `[CHECKOUT-${method.toUpperCase()}]`;
 
+  if (invoice.type === "cart") {
+    return settleCartInvoice(invoice, user, { billing, method });
+  }
+
   if (domainInvoiceNeedsRegistration(invoice)) {
     if (!billing) {
       console.error(
@@ -1292,6 +1306,226 @@ async function settleNonCardInvoice(
       user,
       billing ? { ...billing, paymentMethod: method } : undefined
     );
+  });
+
+  return true;
+}
+
+/** Cartão cobrado, mas a entrega não fechou: o cliente não pode tentar pagar de novo. */
+const CART_DELIVERY_PENDING_MESSAGE =
+  "Pagamento aprovado, mas a entrega do pedido ficou pendente. Não pague novamente — fale com o suporte informando o número da fatura.";
+
+/** Dados de cobrança do formulário de cartão no formato do snapshot do PIX (contato do registrante). */
+function cartBillingFromCheckoutValues(
+  values: Pick<
+    CheckoutFormInputs,
+    "address" | "document" | "firstName" | "lastName" | "phoneNumber"
+  >
+): PixCheckoutSnapshot {
+  return {
+    address: {
+      city: values.address?.city?.trim() ?? "",
+      neighborhood: values.address?.neighborhood?.trim() ?? "",
+      number: values.address?.number?.trim() ?? "",
+      state: values.address?.state?.trim().toUpperCase().slice(0, 2) ?? "",
+      street: values.address?.street?.trim() ?? "",
+      zipCode: (values.address?.zipCode ?? "").replace(/\D/g, ""),
+    },
+    document: values.document ?? "",
+    firstName: values.firstName?.trim() ?? "",
+    lastName: values.lastName?.trim() ?? "",
+    phoneNumber: values.phoneNumber ?? "",
+  };
+}
+
+/** Reserva a entrega do pedido em banco: webhook, polling, cron e réplicas não entregam em paralelo. */
+async function claimCartSettlement(cartId: string): Promise<boolean> {
+  const claimed = await db
+    .update(pgInvoice)
+    .set({
+      metadata: sql`(${pgInvoice.metadata}::jsonb || jsonb_build_object('cartSettlementStartedAt', ${new Date().toISOString()}::text))::json`,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(pgInvoice.id, cartId),
+        eq(pgInvoice.type, "cart"),
+        sql`${pgInvoice.status} <> 'paid'`,
+        // Reserva presa (processo caiu no meio) é retomada depois de 15 minutos.
+        sql`(${pgInvoice.metadata}->>'cartSettlementStartedAt' is null or (${pgInvoice.metadata}->>'cartSettlementStartedAt')::timestamptz < now() - interval '15 minutes')`
+      )
+    )
+    .returning({ id: pgInvoice.id });
+  return claimed.length > 0;
+}
+
+async function releaseCartSettlement(cartId: string): Promise<void> {
+  await db
+    .update(pgInvoice)
+    .set({
+      metadata: sql`(${pgInvoice.metadata}::jsonb - 'cartSettlementStartedAt')::json`,
+    })
+    .where(eq(pgInvoice.id, cartId))
+    .catch(error =>
+      console.error(`[CARRINHO] Falha ao liberar a reserva ${cartId}:`, error)
+    );
+}
+
+/**
+ * Entrega um pedido do carrinho já pago (PIX, boleto, voucher ou cartão). Cada
+ * fatura-filha segue o fluxo de sempre: domínio registra na Namecheap e só vira
+ * paga se sair; VPS vira paga, ganha assinatura e entra no provisionamento. O
+ * dinheiro do pedido já entrou, então o pedido vira "pago" mesmo se um domínio
+ * falhar — a filha fica pendente, com o erro gravado, para reprocesso/estorno.
+ * Idempotente: filha já paga é pulada, então uma nova tentativa só refaz o que faltou.
+ */
+async function settleCartInvoice(
+  cart: Invoice,
+  user: User,
+  opts: {
+    method: "pix" | "boleto" | "voucher" | "credit_card";
+    billing?: PixCheckoutSnapshot | null;
+    cardToken?: string;
+  }
+): Promise<boolean> {
+  const logPrefix = `[CARRINHO-${opts.method.toUpperCase()}]`;
+  const expectedIds = cartDataOf(cart)?.childInvoiceIds ?? [];
+  let children = await loadCartChildren(cart);
+
+  if (children.length === 0 || children.length !== expectedIds.length) {
+    console.error(
+      `${logPrefix} Pedido ${cart.id} com itens inconsistentes (${children.length}/${expectedIds.length}); entrega bloqueada.`
+    );
+    return false;
+  }
+
+  const billing = opts.billing ?? null;
+  const hasDomains = children.some(child => child.type === "domain");
+  if (hasDomains && !billing) {
+    console.error(
+      `${logPrefix} Pedido ${cart.id} sem dados de cobrança; domínios não podem ser registrados.`
+    );
+    return false;
+  }
+
+  if (!(await claimCartSettlement(cart.id))) {
+    console.warn(`${logPrefix} Entrega do pedido ${cart.id} já em andamento.`);
+    return false;
+  }
+
+  const delivered: string[] = [];
+  const failed: string[] = [];
+
+  try {
+    // Voucher do pedido: reparte o desconto entre as filhas antes da entrega.
+    const discounted = splitCartDiscount(cart.amount, children);
+    for (const child of children) {
+      const amount = discounted.get(child.id);
+      await db
+        .update(pgInvoice)
+        .set({
+          ...(amount !== undefined
+            ? { amount, originalAmount: child.amount }
+            : {}),
+          // Snapshot de cobrança na filha: reprocesso de domínio usa o contato real.
+          ...(billing
+            ? {
+                metadata: sql`(${pgInvoice.metadata}::jsonb || jsonb_build_object('pixCheckout', ${JSON.stringify(billing)}::jsonb))::json`,
+              }
+            : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(pgInvoice.id, child.id));
+    }
+    children = await loadCartChildren(cart);
+
+    const contact = billing ? buildNamecheapContact(billing, user.email) : null;
+
+    for (const child of children) {
+      if (child.type === "domain") {
+        // Domínio já registrado numa tentativa anterior: não registra de novo.
+        if (child.status === "paid") {
+          delivered.push(child.id);
+          continue;
+        }
+        const fulfillment = await fulfillDomainInvoice({
+          contact: contact!,
+          invoice: child,
+          logPrefix,
+          onFulfilled: async () => {
+            await triggerCommissionIfApplicable(child as any).catch(() => {});
+          },
+        });
+        if (fulfillment.ok) delivered.push(child.id);
+        else failed.push(child.id);
+        continue;
+      }
+
+      // VPS refaz os passos mesmo se já paga: uma tentativa que caiu entre o "pago" e a
+      // assinatura deixaria a VPS sem entrega. Comissão, assinatura e job são idempotentes.
+      await db
+        .update(pgInvoice)
+        .set({ status: "paid", updatedAt: new Date() })
+        .where(eq(pgInvoice.id, child.id));
+      await triggerCommissionIfApplicable(child as any).catch(() => {});
+      await createVpsSubscriptionIfNeeded(
+        child,
+        user,
+        opts.method === "credit_card"
+          ? { cardToken: opts.cardToken, paymentMethod: "credit_card" }
+          : { paymentMethod: opts.method }
+      );
+      delivered.push(child.id);
+    }
+
+    await db
+      .update(pgInvoice)
+      .set({
+        metadata: sql`((${pgInvoice.metadata}::jsonb - 'cartSettlementStartedAt') || jsonb_build_object('cartFulfillment', ${JSON.stringify({ at: new Date().toISOString(), delivered, failed })}::jsonb))::json`,
+        status: "paid",
+        updatedAt: new Date(),
+      })
+      .where(eq(pgInvoice.id, cart.id));
+  } catch (error) {
+    console.error(`${logPrefix} Erro ao entregar o pedido ${cart.id}:`, error);
+    await releaseCartSettlement(cart.id);
+    throw error;
+  }
+
+  if (failed.length) {
+    console.error(
+      `${logPrefix} Pedido ${cart.id} pago com itens não entregues (reprocessar ou estornar): ${failed.join(", ")}`
+    );
+  }
+  console.log(
+    `${logPrefix} ✓ Pedido ${cart.id} pago | entregues: ${delivered.length} | falhas: ${failed.length}`
+  );
+
+  const paidVps = children.filter(
+    child => child.type === "vps" && delivered.includes(child.id)
+  );
+  const notifyBilling = billing
+    ? { ...billing, paymentMethod: opts.method }
+    : { paymentMethod: opts.method };
+  after(async () => {
+    for (const child of paidVps) {
+      await provisionPaidVps(child.id).catch(error =>
+        console.error(
+          `${logPrefix} Falha ao provisionar a VPS da fatura ${child.id}:`,
+          error
+        )
+      );
+    }
+    for (const child of children) {
+      if (!delivered.includes(child.id)) continue;
+      await triggerPurchaseNotifications(child, user, notifyBilling).catch(
+        error =>
+          console.error(
+            `${logPrefix} Falha na notificação da fatura ${child.id}:`,
+            error
+          )
+      );
+    }
   });
 
   return true;
@@ -1436,6 +1670,8 @@ export async function completeVoucherCheckout(
     };
   if (invoice.status === "paid")
     return { message: "Fatura já confirmada.", status: "success" };
+  if (isCartChildInvoice(invoice))
+    return { message: CART_CHILD_PAYMENT_ERROR, status: "error" };
   const nameParts = (user.name ?? "").split(/\s+/);
   const snapshot = buildPixCheckoutSnapshot({
     address: {
@@ -1452,7 +1688,10 @@ export async function completeVoucherCheckout(
     lastName: nameParts.slice(1).join(" ") || nameParts[0] || "",
     phoneNumber: user.billingPhone ?? "",
   });
-  if (domainInvoiceNeedsRegistration(invoice) && !snapshot.ok)
+  if (
+    (domainInvoiceNeedsRegistration(invoice) || cartHasDomains(invoice)) &&
+    !snapshot.ok
+  )
     return {
       message:
         "Complete os dados de cobrança no cadastro antes de confirmar o voucher integral.",
@@ -1524,6 +1763,9 @@ export async function initiateCheckoutPix(
   if (invoice.status === "paid") {
     return { message: "Esta fatura já foi paga.", status: "error" };
   }
+  if (isCartChildInvoice(invoice)) {
+    return { message: CART_CHILD_PAYMENT_ERROR, status: "error" };
+  }
 
   if (
     invoice.voucherId &&
@@ -1551,6 +1793,15 @@ export async function initiateCheckoutPix(
     if (!(await isPixEligibleForVpsConfig(meta?.config || {}))) {
       return {
         message: "PIX não disponível para esta cobrança.",
+        status: "error",
+      };
+    }
+  } else if (invoice.type === "cart") {
+    const children = await loadCartChildren(invoice);
+    if (!(await cartAllowsPix(children, isPixEligibleForVpsConfig))) {
+      return {
+        message:
+          "PIX não disponível para este pedido: algum servidor do carrinho só aceita cartão.",
         status: "error",
       };
     }
@@ -1680,6 +1931,9 @@ export async function initiateCheckoutBoleto(
   if (invoice.status === "paid") {
     return { message: "Esta fatura já foi paga.", status: "error" };
   }
+  if (isCartChildInvoice(invoice)) {
+    return { message: CART_CHILD_PAYMENT_ERROR, status: "error" };
+  }
 
   if (
     invoice.voucherId &&
@@ -1707,6 +1961,20 @@ export async function initiateCheckoutBoleto(
     if (!(await isBoletoEligibleForVpsConfig(meta?.config || {}))) {
       return {
         message: "Boleto não disponível para esta cobrança.",
+        status: "error",
+      };
+    }
+  } else if (invoice.type === "cart") {
+    const children = await loadCartChildren(invoice);
+    if (
+      !(await cartAllowsBoleto(
+        children,
+        isBoletoEligibleForVpsConfig,
+        isBoletoEnabledGlobally
+      ))
+    ) {
+      return {
+        message: "Boleto não disponível para este pedido.",
         status: "error",
       };
     }
@@ -2306,6 +2574,10 @@ export async function completeCheckout(
     };
   }
 
+  if (isCartChildInvoice(invoice)) {
+    return { message: CART_CHILD_PAYMENT_ERROR, status: "error" };
+  }
+
   if (
     invoice.voucherId &&
     (invoice.status !== "pending" || invoice.dueDate <= new Date())
@@ -2517,6 +2789,66 @@ export async function completeCheckout(
   console.log(
     `[CHECKOUT] Valor base: R$ ${invoice.amount.toFixed(2)} | Parcelas: ${selectedInstallments}x | Taxa comprador (${(buyerRates.rate * 100).toFixed(2)}% + R$${buyerRates.fixedFee}): R$ ${(chargeAmount - invoice.amount).toFixed(2)} | Total: R$ ${chargeAmount.toFixed(2)}`
   );
+
+  if (invoice.type === "cart") {
+    const billing = cartBillingFromCheckoutValues(values);
+    // Com domínio no pedido, contato incompleto = registro recusado. Barrar antes de cobrar.
+    if (cartHasDomains(invoice)) {
+      const missing = missingContactFields(
+        buildNamecheapContact(billing, user.email)
+      );
+      if (missing.length) {
+        await revertInvoiceToPending(invoiceId);
+        return { message: incompleteContactMessage(missing), status: "error" };
+      }
+    }
+
+    console.log("\n[SIMPAY] ── PAGAMENTO DO CARRINHO ──");
+    try {
+      const simpayResult = await simpayApi.createCardPayment({
+        bin: cardToken.substring(0, 6),
+        brand: "unknown",
+        description: atlasSimpayInvoiceDescription(
+          invoice.reference,
+          invoice.type
+        ),
+        document: values.document.replace(/\D/g, ""),
+        document_type:
+          values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
+        email: user.email,
+        holder_name: `${values.firstName} ${values.lastName}`.trim(),
+        installments: selectedInstallments,
+        mobile_phone: values.phoneNumber.replace(/\D/g, ""),
+        name: `${values.firstName} ${values.lastName}`.trim(),
+        price: chargeAmount,
+        token: cardToken,
+      });
+      console.log("[SIMPAY] ✓ Pagamento do carrinho registrado:", {
+        paymentId: simpayResult.paymentId,
+        status: simpayResult.status,
+        transactionId: simpayResult.transactionId,
+      });
+    } catch (err) {
+      console.error("[SIMPAY] ✗ ERRO no pagamento do carrinho:", err);
+      if (isFinalCardDecline(err)) await revertInvoiceToPending(invoiceId);
+      return {
+        message: friendlyCardPaymentError(
+          err,
+          "Não foi possível confirmar o resultado da cobrança. A fatura permanece bloqueada para conciliação; não tente pagar novamente antes de verificar o resultado."
+        ),
+        status: "error",
+      };
+    }
+
+    const settled = await settleCartInvoice(invoice as Invoice, user, {
+      billing,
+      cardToken,
+      method: "credit_card",
+    }).catch(() => false);
+    if (!settled)
+      return { message: CART_DELIVERY_PENDING_MESSAGE, status: "error" };
+    redirect(paymentSuccessUrl(invoiceId));
+  }
 
   if (invoice.type === "domain") {
     const contact = buildNamecheapContact(values, user.email);
@@ -2750,6 +3082,10 @@ export async function completeCheckoutWithSavedCard(
     };
   }
 
+  if (isCartChildInvoice(invoice)) {
+    return { message: CART_CHILD_PAYMENT_ERROR, status: "error" };
+  }
+
   if (!card) {
     return { message: "Token do cartão é obrigatório.", status: "error" };
   }
@@ -2922,6 +3258,72 @@ export async function completeCheckoutWithSavedCard(
   console.log(
     `[CHECKOUT-SAVED] Valor base: R$ ${invoice.amount.toFixed(2)} | Parcelas: ${savedInstallments}x | Taxa comprador (${(savedCardBuyerRates.rate * 100).toFixed(2)}% + R$${savedCardBuyerRates.fixedFee}): R$ ${(savedChargeAmount - invoice.amount).toFixed(2)} | Total: R$ ${savedChargeAmount.toFixed(2)}`
   );
+
+  if (invoice.type === "cart") {
+    const billing = cartBillingFromCheckoutValues(values);
+    if (cartHasDomains(invoice)) {
+      const missing = missingContactFields(
+        buildNamecheapContact(billing, user.email)
+      );
+      if (missing.length) {
+        await revertInvoiceToPending(invoiceId);
+        return { message: incompleteContactMessage(missing), status: "error" };
+      }
+    }
+
+    console.log("\n[SIMPAY] ── PAGAMENTO DO CARRINHO / CARTÃO SALVO ──");
+    try {
+      const result = await simpayApi.createCardPayment({
+        bin: card.last4 || cardToken.substring(0, 6),
+        brand: card.brand || "unknown",
+        description: atlasSimpayInvoiceDescription(
+          invoice.reference,
+          invoice.type
+        ),
+        document: values.document.replace(/\D/g, ""),
+        document_type:
+          values.document.replace(/\D/g, "").length === 11 ? "CPF" : "CNPJ",
+        email: user.email,
+        holder_name:
+          card.holderName || `${values.firstName} ${values.lastName}`.trim(),
+        installments: savedInstallments,
+        mobile_phone: values.phoneNumber.replace(/\D/g, ""),
+        name: `${values.firstName} ${values.lastName}`.trim(),
+        price: savedChargeAmount,
+        token: cardToken,
+      });
+      console.log(
+        "[SIMPAY] ✓ Pagamento do carrinho registrado (cartão salvo):",
+        {
+          paymentId: result.paymentId,
+          status: result.status,
+          transactionId: result.transactionId,
+        }
+      );
+    } catch (err) {
+      console.error(
+        "[SIMPAY] ✗ ERRO no pagamento do carrinho (cartão salvo):",
+        err
+      );
+      if (isFinalCardDecline(err)) await revertInvoiceToPending(invoiceId);
+      return {
+        message: friendlyCardPaymentError(
+          err,
+          "Não foi possível confirmar o resultado da cobrança. A fatura permanece bloqueada para conciliação; não tente pagar novamente antes de verificar o resultado."
+        ),
+        status: "error",
+      };
+    }
+
+    const settled = await settleCartInvoice(invoice as Invoice, user, {
+      billing,
+      cardToken,
+      method: "credit_card",
+    }).catch(() => false);
+    if (!settled)
+      return { message: CART_DELIVERY_PENDING_MESSAGE, status: "error" };
+    return { message: paymentSuccessUrl(invoiceId), status: "success" };
+  }
 
   if (invoice.type === "domain") {
     const contact = buildNamecheapContact(values, user.email);

@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
+import { AddVpsToCartButton } from "@/components/cart/AddToCartButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -1387,69 +1388,79 @@ export default function ConfigureWindowsVps({
                     .filter(
                       (img: any) =>
                         ![
-                          "cpanel", "plesk-win", "n8n", "wireguard",
-                          "nextcloud", "gitlab", "docker", "lamp",
-                          "openclaw", "ipfs", "flux", "horizen", "deepseek",
+                          "cpanel",
+                          "plesk-win",
+                          "n8n",
+                          "wireguard",
+                          "nextcloud",
+                          "gitlab",
+                          "docker",
+                          "lamp",
+                          "openclaw",
+                          "ipfs",
+                          "flux",
+                          "horizen",
+                          "deepseek",
                         ].includes(img.id)
                     )
                     .map((img: any) => (
-                    <button
-                      className={cn(
-                        `flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
-                        osImage === img.id
-                          ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}`
-                          : embedded
-                            ? "border-border"
-                            : "border-white/10"
-                      )}
-                      key={img.id}
-                      onClick={() => {
-                        if (img.id === "windows") setShowWindowsModal(true);
-                        if (img.id === "plesk-linux") setShowPleskModal(true);
-                        if (img.id === "plesk-win")
-                          setShowPleskWindowsModal(true);
-                        if (img.id === "cpanel") setShowCpanelModal(true);
-                        setOsImage(img.id);
-                      }}
-                    >
-                      <div
-                        className={`h-8 w-8 rounded-full ${embedded ? "bg-muted/40" : "bg-white/5"} flex items-center justify-center overflow-hidden`}
-                      >
-                        {img.icon ? (
-                          <img
-                            alt=""
-                            className="h-5 w-5 object-contain"
-                            src={img.icon}
-                          />
-                        ) : (
-                          <Server
-                            className={
-                              embedded
-                                ? "text-muted-foreground"
-                                : "text-slate-500"
-                            }
-                            size={16}
-                          />
+                      <button
+                        className={cn(
+                          `flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
+                          osImage === img.id
+                            ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}`
+                            : embedded
+                              ? "border-border"
+                              : "border-white/10"
                         )}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p
-                          className={`font-bold text-[13px] ${embedded ? "text-foreground" : "text-white"}`}
+                        key={img.id}
+                        onClick={() => {
+                          if (img.id === "windows") setShowWindowsModal(true);
+                          if (img.id === "plesk-linux") setShowPleskModal(true);
+                          if (img.id === "plesk-win")
+                            setShowPleskWindowsModal(true);
+                          if (img.id === "cpanel") setShowCpanelModal(true);
+                          setOsImage(img.id);
+                        }}
+                      >
+                        <div
+                          className={`h-8 w-8 rounded-full ${embedded ? "bg-muted/40" : "bg-white/5"} flex items-center justify-center overflow-hidden`}
                         >
-                          {img.name}
-                        </p>
-                        <p
-                          className={`text-[12px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium uppercase tracking-wide`}
-                        >
-                          {typeof img.price === "number"
-                            ? formatBRLPerMonth(img.price)
-                            : img.eur
-                              ? formatBRLPerMonth(img.eur)
-                              : img.price}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                          {img.icon ? (
+                            <img
+                              alt=""
+                              className="h-5 w-5 object-contain"
+                              src={img.icon}
+                            />
+                          ) : (
+                            <Server
+                              className={
+                                embedded
+                                  ? "text-muted-foreground"
+                                  : "text-slate-500"
+                              }
+                              size={16}
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p
+                            className={`font-bold text-[13px] ${embedded ? "text-foreground" : "text-white"}`}
+                          >
+                            {img.name}
+                          </p>
+                          <p
+                            className={`text-[12px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium uppercase tracking-wide`}
+                          >
+                            {typeof img.price === "number"
+                              ? formatBRLPerMonth(img.price)
+                              : img.eur
+                                ? formatBRLPerMonth(img.eur)
+                                : img.price}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
                 </div>
               </motion.div>
             )}
@@ -2003,11 +2014,11 @@ export default function ConfigureWindowsVps({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-base ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                 >
                   Versão (Inclusa)
-                </label>
+                </span>
                 <Select
                   onValueChange={setWindowsVersion}
                   value={windowsVersion}
@@ -2164,11 +2175,11 @@ export default function ConfigureWindowsVps({
               </div>
 
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-black text-base ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                 >
                   Licença
-                </label>
+                </span>
                 <Select onValueChange={setPleskLicence} value={pleskLicence}>
                   <SelectTrigger
                     className={`h-16 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}
@@ -2286,11 +2297,11 @@ export default function ConfigureWindowsVps({
                   </SelectContent>
                 </Select>
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-black text-base ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                   >
                     Versão
-                  </label>
+                  </span>
                   <Select onValueChange={setPleskVersion} value={pleskVersion}>
                     <SelectTrigger
                       className={`h-14 ${embedded ? "border-border" : "border-white/10"} ${embedded ? "bg-muted/40" : "bg-white/5"} ${embedded ? "text-foreground" : "text-white"}`}
@@ -2364,11 +2375,11 @@ export default function ConfigureWindowsVps({
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-black text-base ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                   >
                     Licença
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setPleskWinLicence}
                     value={pleskWinLicence}
@@ -2498,11 +2509,11 @@ export default function ConfigureWindowsVps({
                 </div>
 
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-black text-base ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                   >
                     Versão Windows
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setPleskWinVersion}
                     value={pleskWinVersion}
@@ -2656,11 +2667,11 @@ export default function ConfigureWindowsVps({
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-black text-base ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                   >
                     Licença
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setCpanelLicence}
                     value={cpanelLicence}
@@ -2711,11 +2722,11 @@ export default function ConfigureWindowsVps({
                 </div>
 
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-black text-base ${embedded ? "text-muted-foreground" : "text-slate-400"} uppercase tracking-widest`}
                   >
                     Versão
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setCpanelVersion}
                     value={cpanelVersion}
@@ -3114,6 +3125,14 @@ export default function ConfigureWindowsVps({
                       </span>
                     </div>
                   </div>
+                  <AddVpsToCartButton
+                    checkoutHref={`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&password=${encodeURIComponent(password)}&storage=${storageType}&type=vps-windows`}
+                    disabled={!isPasswordValid(password)}
+                    embedded={embedded}
+                    label={plan.name}
+                    planId={planId}
+                    priceBrl={dueToday}
+                  />
                   <Button
                     className={cn(
                       "h-9 rounded-lg px-3 font-black text-sm uppercase tracking-widest shadow-xl transition-all md:h-14 md:px-12 md:text-xl",

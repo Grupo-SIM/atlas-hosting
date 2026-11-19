@@ -18,6 +18,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
+import { AddVpsToCartButton } from "@/components/cart/AddToCartButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -1263,72 +1264,83 @@ export default function ConfigureStorageVps({
                     .filter(
                       (img: any) =>
                         ![
-                          "cpanel", "plesk-win", "n8n", "wireguard",
-                          "nextcloud", "gitlab", "docker", "lamp",
-                          "openclaw", "ipfs", "flux", "horizen", "deepseek",
+                          "cpanel",
+                          "plesk-win",
+                          "n8n",
+                          "wireguard",
+                          "nextcloud",
+                          "gitlab",
+                          "docker",
+                          "lamp",
+                          "openclaw",
+                          "ipfs",
+                          "flux",
+                          "horizen",
+                          "deepseek",
                         ].includes(img.id)
                     )
                     .map((img: any) => (
-                    <button
-                      className={cn(
-                        `flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
-                        osImage === img.id
-                          ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}`
-                          : `${embedded ? "border-border" : "border-white/10"}`
-                      )}
-                      key={img.id}
-                      onClick={() => {
-                        if (img.id === "plesk-win")
-                          setShowPleskWindowsModal(true);
-                        else if (img.id === "plesk-linux")
-                          setShowPleskModal(true);
-                        else if (img.name.toLowerCase().includes("ubuntu"))
-                          setShowUbuntuModal(true);
-                        else if (img.id === "custom") setShowCustomModal(true);
-                        else if (img.name.toLowerCase().includes("windows"))
-                          setShowWindowsModal(true);
-                        else if (
-                          img.id === "cpanel" ||
-                          img.name.toLowerCase().includes("cpanel")
-                        )
-                          setShowCpanelModal(true);
-                        setOsImage(img.id);
-                      }}
-                    >
-                      <div
-                        className={`h-8 w-8 rounded-full ${embedded ? "bg-muted/40" : "bg-white/5"} flex items-center justify-center overflow-hidden`}
-                      >
-                        {img.icon ? (
-                          <img
-                            alt=""
-                            className="h-5 w-5 object-contain"
-                            src={img.icon}
-                          />
-                        ) : (
-                          <Server
-                            className={`${embedded ? "text-muted-foreground" : "text-slate-500"}`}
-                            size={16}
-                          />
+                      <button
+                        className={cn(
+                          `flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${embedded ? "bg-muted/40" : "bg-white/5"} backdrop-blur-md`,
+                          osImage === img.id
+                            ? `border-sky-500 ${embedded ? "bg-accent" : "bg-white/10"}`
+                            : `${embedded ? "border-border" : "border-white/10"}`
                         )}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p
-                          className={`font-bold text-[15px] ${embedded ? "text-foreground" : "text-white"}`}
+                        key={img.id}
+                        onClick={() => {
+                          if (img.id === "plesk-win")
+                            setShowPleskWindowsModal(true);
+                          else if (img.id === "plesk-linux")
+                            setShowPleskModal(true);
+                          else if (img.name.toLowerCase().includes("ubuntu"))
+                            setShowUbuntuModal(true);
+                          else if (img.id === "custom")
+                            setShowCustomModal(true);
+                          else if (img.name.toLowerCase().includes("windows"))
+                            setShowWindowsModal(true);
+                          else if (
+                            img.id === "cpanel" ||
+                            img.name.toLowerCase().includes("cpanel")
+                          )
+                            setShowCpanelModal(true);
+                          setOsImage(img.id);
+                        }}
+                      >
+                        <div
+                          className={`h-8 w-8 rounded-full ${embedded ? "bg-muted/40" : "bg-white/5"} flex items-center justify-center overflow-hidden`}
                         >
-                          {img.name}
-                        </p>
-                        <p
-                          className={`text-[14px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium uppercase tracking-wide`}
-                        >
-                          {typeof img.price === "number"
-                            ? formatBRLPerMonth(img.price)
-                            : img.eur
-                              ? formatBRLPerMonth(img.eur)
-                              : img.price}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                          {img.icon ? (
+                            <img
+                              alt=""
+                              className="h-5 w-5 object-contain"
+                              src={img.icon}
+                            />
+                          ) : (
+                            <Server
+                              className={`${embedded ? "text-muted-foreground" : "text-slate-500"}`}
+                              size={16}
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p
+                            className={`font-bold text-[15px] ${embedded ? "text-foreground" : "text-white"}`}
+                          >
+                            {img.name}
+                          </p>
+                          <p
+                            className={`text-[14px] ${embedded ? "text-muted-foreground" : "text-slate-400"} font-medium uppercase tracking-wide`}
+                          >
+                            {typeof img.price === "number"
+                              ? formatBRLPerMonth(img.price)
+                              : img.eur
+                                ? formatBRLPerMonth(img.eur)
+                                : img.price}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
                 </div>
               </motion.div>
             )}
@@ -2212,6 +2224,14 @@ export default function ConfigureStorageVps({
                       </span>
                     </div>
                   </div>
+                  <AddVpsToCartButton
+                    checkoutHref={`/checkout/personal-data?planId=${planId}&qty=${quantity}&duration=${duration}&location=${location}&image=${osImage}&management=${serverManagement}&password=${encodeURIComponent(password)}&type=storage-vps`}
+                    disabled={!isPasswordValid(password)}
+                    embedded={embedded}
+                    label={plan.name}
+                    planId={planId}
+                    priceBrl={dueToday}
+                  />
                   <Button
                     className={cn(
                       "h-9 rounded-lg px-3 font-black text-sm uppercase tracking-widest shadow-xl transition-all md:h-14 md:px-12 md:text-xl",
@@ -2257,11 +2277,11 @@ export default function ConfigureStorageVps({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Versão
-                </label>
+                </span>
                 <Select onValueChange={setUbuntuVersion} value={ubuntuVersion}>
                   <SelectTrigger
                     className={`h-14 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"}`}
@@ -2319,11 +2339,11 @@ export default function ConfigureStorageVps({
                 </h2>
               </div>
               <div className="space-y-4">
-                <label
+                <span
                   className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                 >
                   Selecione a Versão
-                </label>
+                </span>
                 <div className="grid grid-cols-1 gap-3">
                   {[
                     {
@@ -2414,11 +2434,11 @@ export default function ConfigureStorageVps({
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Licença
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setPleskWinLicence}
                     value={pleskWinLicence}
@@ -2517,11 +2537,11 @@ export default function ConfigureStorageVps({
                 </div>
 
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Versão
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setPleskWinVersion}
                     value={pleskWinVersion}
@@ -2632,11 +2652,11 @@ export default function ConfigureStorageVps({
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Licença
-                  </label>
+                  </span>
                   <Select onValueChange={setPleskLicence} value={pleskLicence}>
                     <SelectTrigger
                       className={`h-16 ${embedded ? "border-border bg-muted/40 text-foreground" : "border-white/10 bg-white/5 text-white"}`}
@@ -2776,11 +2796,11 @@ export default function ConfigureStorageVps({
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Licença (Número de Contas)
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setCpanelLicence}
                     value={cpanelLicence}
@@ -2923,11 +2943,11 @@ export default function ConfigureStorageVps({
                 </div>
 
                 <div className="space-y-3">
-                  <label
+                  <span
                     className={`font-bold text-sm ${embedded ? "text-muted-foreground" : "text-slate-300"} uppercase tracking-widest`}
                   >
                     Sistema Operacional
-                  </label>
+                  </span>
                   <Select
                     onValueChange={setCpanelVersion}
                     value={cpanelVersion}

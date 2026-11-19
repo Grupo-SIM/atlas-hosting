@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { createDomainInvoice } from "@/app/actions";
+import { AddDomainToCartButton } from "@/components/cart/AddToCartButtons";
 import { toBrl } from "@/lib/utils";
 import { Button } from "../ui/button";
 import {
@@ -135,28 +136,35 @@ export function DomainPriceSelector({
           </SelectContent>
         </Select>
 
-        <form
-          action={async formData => {
-            const res = await createDomainInvoice(formData);
-            if (res.error) {
-              toast.error(res.error);
-              return;
-            }
-            router.push(`/checkout/${res.invoiceId}`);
-          }}
-        >
-          <input name="domain" type="hidden" value={domain} />
-          <input name="years" type="hidden" value={localYears} />
-          <input name="whoisguard" type="hidden" value="on" />
-          <Button
-            disabled={isConfirming}
-            isLoading={isConfirming}
-            type="submit"
-            variant="action"
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <form
+            action={async formData => {
+              const res = await createDomainInvoice(formData);
+              if (res.error) {
+                toast.error(res.error);
+                return;
+              }
+              router.push(`/checkout/${res.invoiceId}`);
+            }}
           >
-            Registrar domínio
-          </Button>
-        </form>
+            <input name="domain" type="hidden" value={domain} />
+            <input name="years" type="hidden" value={localYears} />
+            <input name="whoisguard" type="hidden" value="on" />
+            <Button
+              disabled={isConfirming}
+              isLoading={isConfirming}
+              type="submit"
+              variant="action"
+            >
+              Registrar domínio
+            </Button>
+          </form>
+          <AddDomainToCartButton
+            domain={domain}
+            priceBrl={currentPrice}
+            years={selectedYears}
+          />
+        </div>
       </div>
 
       {/* Informações de serviços gratuitos */}

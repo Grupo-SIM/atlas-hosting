@@ -10,11 +10,10 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
-import { useDebouncedInput } from "@/hooks/use-debounced-input";
-import { completeVoucherCheckout } from "@/app/actions";
+import { toast } from "sonner";
 import { applyVoucher, removeVoucher } from "@/app/(auth)/vouchers/actions";
+import { completeVoucherCheckout } from "@/app/actions";
 import { Footer } from "@/app/landing/components/Footer";
 import ModernCheckoutForm, {
   type CheckoutSidebarActionState,
@@ -33,7 +32,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import type { Invoice } from "@/lib/db/schema";
+import { useDebouncedInput } from "@/hooks/use-debounced-input";
+import type { CartInvoiceItemSummary, Invoice } from "@/lib/db/schema";
 import { toBrl } from "@/lib/utils";
 import type { CheckoutRates } from "./page";
 
@@ -54,6 +54,8 @@ interface CheckoutClientProps {
   initialStep?: "billing" | "payment";
   isAnnualVps?: boolean;
   allowBoleto?: boolean;
+  /** Pedido do carrinho: itens exibidos no resumo. */
+  cartItems?: CartInvoiceItemSummary[];
 }
 
 export default function CheckoutClient({
@@ -63,6 +65,7 @@ export default function CheckoutClient({
   initialStep,
   isAnnualVps,
   allowBoleto,
+  cartItems,
 }: CheckoutClientProps) {
   const router = useRouter();
   const base = invoice.originalAmount ?? invoice.amount;
@@ -106,7 +109,10 @@ export default function CheckoutClient({
   }, []);
 
   const [settledVoucherCode, setSettledVoucherCode] = useState("");
-  const [voucherCode, setVoucherCode] = useDebouncedInput(settledVoucherCode, setSettledVoucherCode);
+  const [voucherCode, setVoucherCode] = useDebouncedInput(
+    settledVoucherCode,
+    setSettledVoucherCode
+  );
   const [voucherLoading, setVoucherLoading] = useState(false);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [appliedVoucher, setAppliedVoucher] = useState<{
@@ -114,7 +120,16 @@ export default function CheckoutClient({
     discount: number;
     finalAmount: number;
     message: string;
-  } | null>(invoice.voucherId ? { voucherId: invoice.voucherId, discount: invoice.voucherDiscount / 100, finalAmount: invoice.amount, message: "Voucher reservado para esta fatura." } : null);
+  } | null>(
+    invoice.voucherId
+      ? {
+          discount: invoice.voucherDiscount / 100,
+          finalAmount: invoice.amount,
+          message: "Voucher reservado para esta fatura.",
+          voucherId: invoice.voucherId,
+        }
+      : null
+  );
 
   const onSidebarActionStateChange = useCallback(
     (next: CheckoutSidebarActionState) => {
@@ -159,15 +174,21 @@ export default function CheckoutClient({
     setVoucherLoading(true);
     try {
       const result = await removeVoucher(invoice.id);
-      if (result.status === "error") { setVoucherError(result.message); return; }
+      if (result.status === "error") {
+        setVoucherError(result.message);
+        return;
+      }
       setAppliedVoucher(null);
       setVoucherCode("");
       setSettledVoucherCode("");
       setVoucherError(null);
       toast.success(result.message);
       router.refresh();
-    } catch { setVoucherError("Erro ao remover voucher."); }
-    finally { setVoucherLoading(false); }
+    } catch {
+      setVoucherError("Erro ao remover voucher.");
+    } finally {
+      setVoucherLoading(false);
+    }
   };
 
   const whoisGuard = (invoice.metadata as any)?.whoisguard === "on";
@@ -221,12 +242,12 @@ export default function CheckoutClient({
               <ModernCheckoutForm
                 allowBoleto={allowBoleto}
                 hasExistingUser={userHasDomId}
-                isAuthenticated={!!user}
                 initialStep={initialStep}
                 installmentRates={rates?.installments}
                 invoiceId={invoice.id}
                 invoiceType={invoice.type}
                 isAnnualVps={isAnnualVps}
+                isAuthenticated={!!user}
                 onInstallmentsChange={setSelectedInstallments}
                 onPaymentMethodChange={onPaymentMethodChange}
                 onSidebarActionStateChange={onSidebarActionStateChange}
@@ -280,19 +301,44 @@ export default function CheckoutClient({
                   </CardHeader>
                   <CardContent className="space-y-6 pt-6">
                     <div className="space-y-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <p className="font-black text-white text-xs uppercase tracking-tight">
-                            {invoice.type === "domain" ? "Domínio" : "Plano"}
-                          </p>
-                          <p className="font-bold text-[11px] text-slate-500 uppercase leading-tight tracking-wider">
-                            {reference}
+                      {cartItems && cartItems.length > 0 ? (
+                        <div className="space-y-3">
+                          {cartItems.map(item => (
+                            <div
+                              className="flex items-start justify-between gap-4"
+                              key={item.invoiceId}
+                            >
+                              <div className="min-w-0 space-y-1">
+                                <p className="font-black text-white text-xs uppercase tracking-tight">
+                                  {item.kind === "domain"
+                                    ? "Domínio"
+                                    : "Servidor"}
+                                </p>
+                                <p className="break-all font-bold text-[11px] text-slate-500 uppercase leading-tight tracking-wider">
+                                  {item.label}
+                                </p>
+                              </div>
+                              <p className="whitespace-nowrap font-black text-white">
+                                {toBrl(item.amount)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-1">
+                            <p className="font-black text-white text-xs uppercase tracking-tight">
+                              {invoice.type === "domain" ? "Domínio" : "Plano"}
+                            </p>
+                            <p className="font-bold text-[11px] text-slate-500 uppercase leading-tight tracking-wider">
+                              {reference}
+                            </p>
+                          </div>
+                          <p className="whitespace-nowrap font-black text-white">
+                            {toBrl(invoice.amount)}
                           </p>
                         </div>
-                        <p className="whitespace-nowrap font-black text-white">
-                          {toBrl(invoice.amount)}
-                        </p>
-                      </div>
+                      )}
 
                       {isCreditCard &&
                         invoice.type === "domain" &&
@@ -385,10 +431,10 @@ export default function CheckoutClient({
                             </p>
                           </div>
                           <Button
+                            aria-label="Remover voucher"
                             className="h-8 w-8 rounded-full p-0 hover:bg-white/5"
                             onClick={handleRemoveVoucher}
                             size="sm"
-                            aria-label="Remover voucher"
                             variant="outline"
                           >
                             <X className="h-4 w-4 text-emerald-400" />
@@ -398,6 +444,7 @@ export default function CheckoutClient({
                         <div className="flex gap-2">
                           <Input
                             className="h-10 rounded-xl border-white/20 bg-white/5 font-bold text-white text-xs uppercase tracking-widest outline-none transition-all placeholder:text-slate-500 hover:bg-white/10 focus:border-sky-500/50"
+                            name="voucherCode"
                             onChange={e =>
                               setVoucherCode(e.target.value.toUpperCase())
                             }
@@ -407,7 +454,6 @@ export default function CheckoutClient({
                                 void handleApplyVoucher();
                               }
                             }}
-                            name="voucherCode"
                             placeholder="Ex: ATLAS15"
                             value={voucherCode}
                           />
@@ -515,20 +561,35 @@ export default function CheckoutClient({
                 {(!sidebarAction.hidden || displayBase === 0) && (
                   <GradientButton
                     className="w-full min-w-full cursor-pointer px-4 text-lg disabled:opacity-60"
-                    disabled={displayBase === 0 ? voucherLoading : sidebarAction.disabled}
+                    disabled={
+                      displayBase === 0
+                        ? voucherLoading
+                        : sidebarAction.disabled
+                    }
                     onClick={async () => {
                       if (displayBase === 0) {
                         setVoucherLoading(true);
                         try {
-                          const result = await completeVoucherCheckout(invoice.id);
-                          if (result.status === "error") setVoucherError(result.message);
-                          else { toast.success(result.message); router.refresh(); }
-                        } catch { setVoucherError("Erro ao confirmar voucher."); }
-                        finally { setVoucherLoading(false); }
+                          const result = await completeVoucherCheckout(
+                            invoice.id
+                          );
+                          if (result.status === "error")
+                            setVoucherError(result.message);
+                          else {
+                            toast.success(result.message);
+                            router.refresh();
+                          }
+                        } catch {
+                          setVoucherError("Erro ao confirmar voucher.");
+                        } finally {
+                          setVoucherLoading(false);
+                        }
                       } else checkoutFormRef.current?.submit();
                     }}
                   >
-                    {displayBase === 0 ? "Confirmar voucher integral" : sidebarAction.label}
+                    {displayBase === 0
+                      ? "Confirmar voucher integral"
+                      : sidebarAction.label}
                   </GradientButton>
                 )}
               </div>

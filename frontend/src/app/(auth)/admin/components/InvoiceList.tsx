@@ -95,6 +95,7 @@ export async function InvoiceList({
 
   const getTypeText = (type: string) => {
     const typeMap: Record<string, string> = {
+      cart: "Carrinho",
       domain: "Domínio",
       plan: "Plano",
     };

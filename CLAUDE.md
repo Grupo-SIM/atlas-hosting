@@ -54,3 +54,4 @@ change. Keep guide discovery links here when adding new development guides.
 
 - [Criador de Sites](docs/development/site-builder.md) — `packages/site-builder`, templates, editor e publicação.
 - [Equipe e permissões por área](docs/development/team-permissions.md) — usuários de equipe em Administração → Usuários, níveis e regras de concessão.
+- [Carrinho](docs/development/cart.md) — domínios + VPS num pagamento só: fatura `cart`, faturas-filhas e entrega após o pagamento.

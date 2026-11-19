@@ -10,6 +10,10 @@ import {
 import { Roboto } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AddDomainsToCartButton,
+  AddDomainToCartButton,
+} from "@/components/cart/AddToCartButtons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,6 +54,8 @@ interface SearchResponse {
 
 interface DomainSearchResultsProps {
   query: string;
+  /** Sessão ativa: "Registrar" vai direto ao checkout em vez de pedir login. */
+  isAuthenticated: boolean;
 }
 
 const PAGE_SIZE = 9;
@@ -106,6 +112,7 @@ function pathAfterAuthBundle(domains: string[]) {
 
 export default function DomainSearchResults({
   query,
+  isAuthenticated,
 }: DomainSearchResultsProps) {
   const router = useRouter();
   const [mainResult, setMainResult] = useState<DomainResult | null>(null);
@@ -118,7 +125,11 @@ export default function DomainSearchResults({
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [postAuthPath, setPostAuthPath] = useState<string | null>(null);
 
-  const openAuthModal = (path: string) => {
+  const startPurchase = (path: string) => {
+    if (isAuthenticated) {
+      router.push(path);
+      return;
+    }
     setPostAuthPath(path);
     setAuthModalOpen(true);
   };
@@ -323,12 +334,18 @@ export default function DomainSearchResults({
               <Button
                 className={`${roboto.className} mt-8 h-12 w-full rounded-xl bg-sky-500 font-bold text-sm text-white uppercase tracking-wide shadow-[0_8px_24px_rgba(14,165,233,0.25)] transition-all hover:bg-sky-400 active:scale-[0.98]`}
                 onClick={() =>
-                  openAuthModal(pathAfterAuthSingle(mainResult.domain))
+                  startPurchase(pathAfterAuthSingle(mainResult.domain))
                 }
                 type="button"
               >
                 Registrar agora
               </Button>
+              <AddDomainToCartButton
+                appearance="landing"
+                className={`${roboto.className} mt-3 h-12 w-full text-sm`}
+                domain={mainResult.domain}
+                priceBrl={mainResult.priceBRL}
+              />
             </>
           ) : (
             <div className="mt-6 flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-4">
@@ -392,7 +409,7 @@ export default function DomainSearchResults({
                 <Button
                   className={`${roboto.className} mt-8 h-12 w-full rounded-xl border-2 border-sky-500/50 bg-transparent font-bold text-sky-400 text-sm uppercase tracking-wide transition-all hover:bg-sky-500/10 hover:text-sky-400`}
                   onClick={() =>
-                    openAuthModal(
+                    startPurchase(
                       pathAfterAuthBundle(bundleItems.map(b => b.domain))
                     )
                   }
@@ -405,13 +422,22 @@ export default function DomainSearchResults({
                 <Button
                   className={`${roboto.className} mt-8 h-12 w-full rounded-xl border-2 border-sky-500/50 bg-transparent font-bold text-sky-400 text-sm uppercase tracking-wide transition-all hover:bg-sky-500/10 hover:text-sky-400`}
                   onClick={() =>
-                    openAuthModal(pathAfterAuthSingle(bundleItems[0]!.domain))
+                    startPurchase(pathAfterAuthSingle(bundleItems[0]!.domain))
                   }
                   type="button"
                   variant="outline"
                 >
                   Registrar esta extensão
                 </Button>
+              ) : null}
+              {bundleItems.length > 0 ? (
+                <AddDomainsToCartButton
+                  className={`${roboto.className} mt-3 h-12 w-full text-sm`}
+                  domains={bundleItems.map(b => ({
+                    domain: b.domain,
+                    priceBrl: b.priceBRL,
+                  }))}
+                />
               ) : null}
             </>
           ) : (
@@ -526,13 +552,18 @@ export default function DomainSearchResults({
                       <Button
                         className={`${roboto.className} h-10 min-w-[7.5rem] shrink-0 rounded-xl border-white/25 bg-transparent font-bold text-white text-xs uppercase tracking-wide transition-all hover:border-sky-500/50 hover:bg-sky-500/5 hover:text-sky-400`}
                         onClick={() =>
-                          openAuthModal(pathAfterAuthSingle(s.domain))
+                          startPurchase(pathAfterAuthSingle(s.domain))
                         }
                         type="button"
                         variant="outline"
                       >
                         Registrar
                       </Button>
+                      <AddDomainToCartButton
+                        appearance="landing-icon"
+                        domain={s.domain}
+                        priceBrl={s.priceBRL}
+                      />
                     </>
                   ) : (
                     <Button

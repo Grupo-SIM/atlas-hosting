@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getOptionalUser } from "@/lib/auth";
+import { vpsConfigFromSearchParams } from "@/lib/cart/vps-config";
 
 function PersonalDataForm() {
   const searchParams = useSearchParams();
@@ -27,43 +28,8 @@ function PersonalDataForm() {
   });
 
   const planId = searchParams.get("planId") || "10";
-  const vpsConfig = {
-    backup: searchParams.get("backup") || "false",
-    cpanelLicence: searchParams.get("cpanelLicence"),
-    cpanelVersion: searchParams.get("cpanelVersion"),
-    customImageOption: searchParams.get("customImageOption"),
-    customLinkAllowBoleto:
-      searchParams.get("customLinkAllowBoleto") || undefined,
-    customLinkAllowPix: searchParams.get("customLinkAllowPix") || undefined,
-    // Admin-generated payment link (arbitrary period + admin-typed price) — see /pay/[linkId]
-    customLinkAmountBrl: searchParams.get("customLinkAmountBrl") || undefined,
-    debianVersion: searchParams.get("debianVersion"),
-    dockerVersion: searchParams.get("dockerVersion"),
-    duration: searchParams.get("duration") || "1",
-    image: searchParams.get("image") || "ubuntu",
-    ipv4Address: searchParams.get("ipv4Address"),
-    lampVersion: searchParams.get("lampVersion"),
-    location: searchParams.get("location") || "eu",
-    management: searchParams.get("management") || "unmanaged",
-    monitoring: searchParams.get("monitoring"),
-    objectStorage: searchParams.get("objectStorage"),
-    password: searchParams.get("password"),
-    paymentLinkId: searchParams.get("paymentLinkId") || undefined,
-    pleskLicence: searchParams.get("pleskLicence"),
-    pleskWinLicence: searchParams.get("pleskWinLicence"),
-    pleskWinVersion: searchParams.get("pleskWinVersion"),
-    privateNetwork: searchParams.get("privateNetwork"),
-    qty: searchParams.get("qty") || "1",
-    rhelVersion: searchParams.get("rhelVersion"),
-    storage: searchParams.get("storage") || "ssd-150",
-    storageUpgrades: searchParams.get("storageUpgrades")
-      ? JSON.parse(searchParams.get("storageUpgrades")!)
-      : undefined,
-    type: searchParams.get("type") || "vps",
-    ubuntuVersion: searchParams.get("ubuntuVersion"),
-    webminVersion: searchParams.get("webminVersion"),
-    windowsVersion: searchParams.get("windowsVersion"),
-  };
+  // Mesma leitura usada pelo carrinho (`lib/cart/vps-config`).
+  const vpsConfig = vpsConfigFromSearchParams(searchParams);
 
   // Cliente já logado não precisa preencher dados pessoais de novo — cria a
   // fatura direto com a conta atual e pula pro checkout.

@@ -3,10 +3,13 @@ import type {
   DomainRenewInvoiceOptions,
   Invoice,
 } from "@/lib/db/schema";
-import { deliverEmergencyAlert, getEmergencyRecipients } from "@/lib/server/emergency-alerts";
 import { sendNotificationEmail } from "@/lib/email/service";
 import { namecheapApi } from "@/lib/server/apis/namecheap";
 import type { UsersGetBalancesCleanedResponse } from "@/lib/server/apis/namecheap/types";
+import {
+  deliverEmergencyAlert,
+  getEmergencyRecipients,
+} from "@/lib/server/emergency-alerts";
 
 export const NAMECHEAP_LOW_BALANCE_USD = 40;
 const PAYMENT_BLOCKED_MESSAGE =
@@ -38,7 +41,9 @@ interface InsufficientBalanceNotifier {
   notify(availableBalance: number, requiredBalance: number): Promise<void>;
 }
 
-export function shouldSendNamecheapBalanceAlert(availableBalance: number): boolean {
+export function shouldSendNamecheapBalanceAlert(
+  availableBalance: number
+): boolean {
   return availableBalance < NAMECHEAP_LOW_BALANCE_USD;
 }
 
@@ -62,14 +67,18 @@ async function notifyLowNamecheapBalance(
     return { ...result, notified: false, reason: "recipient_not_configured" };
   }
 
-  const notified = await deliverEmergencyAlert(recipient => sendNotificationEmail(
-    recipient,
-    "Admin",
-    "Atlas Hosting",
-    "Saldo baixo na Namecheap",
-    `O saldo disponível na conta Namecheap está em <strong>${balances.Currency} ${balances.AvailableBalance.toFixed(2)}</strong>, abaixo do limite de <strong>USD ${NAMECHEAP_LOW_BALANCE_USD.toFixed(2)}</strong>. Adicione fundos para evitar falhas no registro e na renovação de domínios.`,
-    "danger"
-  ), recipients);
+  const notified = await deliverEmergencyAlert(
+    recipient =>
+      sendNotificationEmail(
+        recipient,
+        "Admin",
+        "Atlas Hosting",
+        "Saldo baixo na Namecheap",
+        `O saldo disponível na conta Namecheap está em <strong>${balances.Currency} ${balances.AvailableBalance.toFixed(2)}</strong>, abaixo do limite de <strong>USD ${NAMECHEAP_LOW_BALANCE_USD.toFixed(2)}</strong>. Adicione fundos para evitar falhas no registro e na renovação de domínios.`,
+        "danger"
+      ),
+    recipients
+  );
 
   return { ...result, notified };
 }
@@ -105,14 +114,18 @@ export async function notifyNamecheapActionFailure(
     return;
   }
 
-  await deliverEmergencyAlert(recipient => sendNotificationEmail(
-    recipient,
-    "Admin",
-    "Atlas Hosting",
-    `Falha na Namecheap: ${action}`,
-    `A ação <strong>${action}</strong> falhou na Namecheap.<br><br>Detalhe: <strong>${error}</strong>.`,
-    "danger"
-  ), recipients);
+  await deliverEmergencyAlert(
+    recipient =>
+      sendNotificationEmail(
+        recipient,
+        "Admin",
+        "Atlas Hosting",
+        `Falha na Namecheap: ${action}`,
+        `A ação <strong>${action}</strong> falhou na Namecheap.<br><br>Detalhe: <strong>${error}</strong>.`,
+        "danger"
+      ),
+    recipients
+  );
 }
 
 export async function notifyNamecheapActionFailureSafely(
@@ -141,14 +154,18 @@ async function notifyInsufficientNamecheapBalance(
     return;
   }
 
-  await deliverEmergencyAlert(recipient => sendNotificationEmail(
-    recipient,
-    "Admin",
-    "Atlas Hosting",
-    "Compra de domínio bloqueada por saldo insuficiente",
-    `Uma tentativa de compra foi bloqueada antes da cobrança do cliente. Saldo disponível: <strong>USD ${availableBalance.toFixed(2)}</strong>. Custo necessário na Namecheap: <strong>USD ${requiredBalance.toFixed(2)}</strong>. Adicione fundos à conta para liberar novas compras.`,
-    "danger"
-  ), recipients);
+  await deliverEmergencyAlert(
+    recipient =>
+      sendNotificationEmail(
+        recipient,
+        "Admin",
+        "Atlas Hosting",
+        "Compra de domínio bloqueada por saldo insuficiente",
+        `Uma tentativa de compra foi bloqueada antes da cobrança do cliente. Saldo disponível: <strong>USD ${availableBalance.toFixed(2)}</strong>. Custo necessário na Namecheap: <strong>USD ${requiredBalance.toFixed(2)}</strong>. Adicione fundos à conta para liberar novas compras.`,
+        "danger"
+      ),
+    recipients
+  );
 }
 
 export async function validateNamecheapFundsForPayment(
@@ -158,7 +175,13 @@ export async function validateNamecheapFundsForPayment(
     notify: notifyInsufficientNamecheapBalance,
   }
 ): Promise<NamecheapFundsValidation> {
-  if (invoice.type !== "domain") return { ok: true };
+  // Pedido do carrinho: só checa saldo quando tem domínio (custo somado em `namecheapCostUsd`).
+  const isCartWithDomains =
+    invoice.type === "cart" &&
+    !!(
+      invoice.metadata as { cart?: { items?: { kind?: string }[] } }
+    )?.cart?.items?.some(item => item.kind === "domain");
+  if (invoice.type !== "domain" && !isCartWithDomains) return { ok: true };
 
   const metadata = invoice.metadata as DomainRegisterInvoiceOptions &
     DomainRenewInvoiceOptions;
