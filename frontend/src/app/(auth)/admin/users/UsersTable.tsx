@@ -30,6 +30,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useDebouncedInput } from "@/hooks/use-debounced-input";
 import { exportTableToPdf } from "@/lib/exportPdf";
+import { accessLabel } from "./access-label";
 import type { UserRow } from "./actions";
 import { SendUserEmailButton } from "./components";
 import { getUserClientStatus } from "./status";
@@ -39,6 +40,7 @@ import {
   type SubscriptionFilter,
   subscriptionBillingLabel,
 } from "./subscription-status";
+import { type AccessContext, UserAccessButton } from "./UserAccessCell";
 import { UserActionsCell } from "./UserActionsCell";
 
 function toBrl(value: number) {
@@ -54,7 +56,18 @@ const STATUS_LABEL = {
 const STATUS_TIP =
   "Ativo: tem algo contratado conosco (VPS/VDS ou domínio). Inativo: tem conta mas não paga nada. Suspenso: conta bloqueada por um admin.";
 
-export function UsersTable({ users }: { users: UserRow[] }) {
+export function UsersTable({
+  access,
+  users,
+}: {
+  /** Acesso de equipe de cada usuário e o lápis para editar (só para quem pode gerenciar Usuários). */
+  access?: AccessContext;
+  users: UserRow[];
+}) {
+  const rowById = useMemo(
+    () => new Map((access?.rows ?? []).map(r => [r.id, r])),
+    [access]
+  );
   const [search, setSearch] = useState("");
   const [localSearch, setLocalSearch] = useDebouncedInput(search, setSearch);
   const [statusFilter, setStatusFilter] = useState<
@@ -207,6 +220,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                     tip="Métodos de pagamento de todas as assinaturas vigentes: cartão de crédito, PIX, boleto ou voucher."
                   />
                 </TableHead>
+                {access ? <TableHead>Acesso</TableHead> : null}
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -252,8 +266,36 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                       {subscriptionBillingLabel(u)}
                     </Badge>
                   </TableCell>
+                  {access ? (
+                    <TableCell>
+                      {(() => {
+                        const label = accessLabel(
+                          u,
+                          rowById.get(u.id),
+                          access.master
+                        );
+                        return (
+                          <div className="flex flex-col items-start gap-1">
+                            {label.badge ? (
+                              <Badge variant="secondary">{label.badge}</Badge>
+                            ) : null}
+                            <span className="text-muted-foreground text-xs">
+                              {label.text}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
+                  ) : null}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
+                      {access ? (
+                        <UserAccessButton
+                          access={access}
+                          row={rowById.get(u.id)}
+                          user={u}
+                        />
+                      ) : null}
                       <SendUserEmailButton
                         email={u.email}
                         id={u.id}
@@ -272,7 +314,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                 <TableRow>
                   <TableCell
                     className="h-24 text-center text-muted-foreground"
-                    colSpan={7}
+                    colSpan={access ? 8 : 7}
                   >
                     Nenhum usuário encontrado.
                   </TableCell>

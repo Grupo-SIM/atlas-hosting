@@ -125,7 +125,19 @@ export default async function AdminUsersPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <UsersTable users={users} />
+          <UsersTable
+            access={
+              team
+                ? {
+                    canExisting: team.canExisting,
+                    levels: team.levels,
+                    master: team.master,
+                    rows: team.rows,
+                  }
+                : undefined
+            }
+            users={users}
+          />
         </CardContent>
       </Card>
     </div>
