@@ -34,3 +34,36 @@ export function uploadSizeError(
   if (file.size <= uploadLimitBytes(kind)) return null;
   return `${SUBJECT[kind]} tem ${formatSize(file.size)}; o limite é de ${UPLOAD_LIMIT_MB[kind]} MB. Reduza o tamanho (ou comprima) e envie de novo.`;
 }
+
+const IMAGE_EXT = /\.(jpe?g|png|webp|gif|svg|avif)$/i;
+const VIDEO_EXT = /\.(mp4|m4v|mov|webm)$/i;
+const UNSUPPORTED_IMAGE =
+  /(?:^image\/(?:heic|heif|bmp|tiff?|x-icon|vnd\.microsoft\.icon)$)|\.(?:heic|heif|bmp|tiff?|ico|psd|ai|eps|raw|cr2|nef)$/i;
+
+/**
+ * Imagem ou vídeo? Vale o tipo que o navegador informa e, quando ele vem vazio (acontece com `.svg` em alguns
+ * computadores), a extensão do nome. `null` = nem um nem outro.
+ */
+export function mediaKindOf(file: {
+  name?: string;
+  type?: string;
+}): "image" | "video" | null {
+  const type = (file.type ?? "").toLowerCase();
+  const name = file.name ?? "";
+  if (type.startsWith("video/")) return "video";
+  if (type.startsWith("image/")) return "image";
+  if (VIDEO_EXT.test(name)) return "video";
+  if (IMAGE_EXT.test(name)) return "image";
+  return null;
+}
+
+/** Imagem de um formato que o editor não converte (HEIC do iPhone, BMP, TIFF, ícone…); `null` se serve. */
+export function imageFormatError(file: {
+  name?: string;
+  type?: string;
+}): string | null {
+  const type = (file.type ?? "").toLowerCase();
+  if (UNSUPPORTED_IMAGE.test(type) || UNSUPPORTED_IMAGE.test(file.name ?? ""))
+    return `Este formato de imagem não é aceito. Use ${IMAGE_FORMATS} (no iPhone, exporte a foto como JPG).`;
+  return null;
+}

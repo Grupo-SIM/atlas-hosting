@@ -3,6 +3,7 @@
 import type { Site } from "@repo/site-builder";
 import { type AiConfig, SiteEditor } from "@repo/site-builder/editor";
 import { type ReactNode, useRef, useState } from "react";
+import { friendlyError } from "@/lib/site-builder/stale-action";
 import { resolveYoutubeChannel, saveSite, uploadSiteFont } from "../../actions";
 import {
   disconnectAi,
@@ -96,24 +97,42 @@ export default function SiteEditorClient({
         basePath={`/criador-de-sites/${siteId}`}
         exitHref="/criador-de-sites"
         initialSite={initialSite}
-        onPublish={(_site, password) => republishSite({ password, siteId })}
+        onPublish={async (_site, password) => {
+          try {
+            return await republishSite({ password, siteId });
+          } catch (error) {
+            return { error: friendlyError(error), ok: false };
+          }
+        }}
         onResolveChannel={async input => {
-          const result = await resolveYoutubeChannel(input);
-          if (!result.ok) throw new Error(result.error);
-          return { id: result.id, name: result.name };
+          try {
+            const result = await resolveYoutubeChannel(input);
+            if (!result.ok) throw new Error(result.error);
+            return { id: result.id, name: result.name };
+          } catch (error) {
+            throw new Error(friendlyError(error));
+          }
         }}
         onSave={async site => {
-          const result = await saveSite(siteId, site, abertoEm.current);
-          if (result.ok && result.sincronizadoEm)
-            abertoEm.current = result.sincronizadoEm;
-          return result;
+          try {
+            const result = await saveSite(siteId, site, abertoEm.current);
+            if (result.ok && result.sincronizadoEm)
+              abertoEm.current = result.sincronizadoEm;
+            return result;
+          } catch (error) {
+            return { error: friendlyError(error), ok: false };
+          }
         }}
         onUploadFont={async file => {
-          const data = new FormData();
-          data.append("file", file);
-          const result = await uploadSiteFont(data);
-          if (!result.ok) throw new Error(result.error);
-          return { name: result.name, url: result.url };
+          try {
+            const data = new FormData();
+            data.append("file", file);
+            const result = await uploadSiteFont(data);
+            if (!result.ok) throw new Error(result.error);
+            return { name: result.name, url: result.url };
+          } catch (error) {
+            throw new Error(friendlyError(error));
+          }
         }}
         onUploadImage={uploadSiteMedia}
         originalSite={originalSite}

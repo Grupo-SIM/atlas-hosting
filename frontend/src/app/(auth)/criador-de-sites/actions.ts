@@ -2,7 +2,9 @@
 
 import {
   type Category,
+  imageFormatError,
   isWordpressTemplate,
+  mediaKindOf,
   type Post,
   siteSchema,
   UPLOAD_LIMIT_MB,
@@ -232,9 +234,11 @@ export async function uploadSiteImage(
   }
 
   const file = formData.get("file");
-  if (!(file instanceof File) || !file.type.startsWith("image/")) {
+  if (!(file instanceof File) || mediaKindOf(file) !== "image") {
     return { error: "Envie um arquivo de imagem.", ok: false };
   }
+  const badFormat = imageFormatError(file);
+  if (badFormat) return { error: badFormat, ok: false };
   if (file.size > MAX_IMAGE_BYTES) {
     return {
       error: `A imagem deve ter no máximo ${UPLOAD_LIMIT_MB.image} MB.`,

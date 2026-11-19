@@ -40,6 +40,8 @@ const isMediaField = (f: FieldDef) => f.kind === "image" || f.kind === "media";
 /** O valor do campo é a mídia clicada? Vídeo de link chega ao canvas só como ID/endereço do player. */
 const sameMedia = (stored: unknown, want: string) => {
   const v = norm(stored);
+  // Espaço ainda vazio (o bloco apontou o campo): é a mídia clicada se o campo está vazio.
+  if (!want) return !v;
   return Boolean(v) && (v === want || (want.length >= 6 && v.includes(want)));
 };
 
@@ -58,7 +60,8 @@ export function mediaTarget(input: {
 }): MediaTarget | null {
   const { currentPost, defaults, fields, hint, props, site } = input;
   const want = norm(hint.value);
-  if (!want) return null;
+  // Sem mídia ainda, só dá para achar o campo quando o bloco diz qual é (`data-sb-field`).
+  if (!(want || hint.field)) return null;
   const stored = (key: string) => props[key] ?? defaults[key];
   const hits: MediaTarget[] = [];
   for (const m of matchItem(fields, props, defaults, hint)) {

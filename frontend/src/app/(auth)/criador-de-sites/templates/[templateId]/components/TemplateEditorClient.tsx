@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { friendlyError } from "@/lib/site-builder/stale-action";
 import { aiConfig } from "../../../[siteId]/components/SiteEditorClient";
 import { resolveYoutubeChannel, uploadSiteFont } from "../../../actions";
 import { uploadSiteMedia } from "../../../components/upload-media";
@@ -137,21 +138,33 @@ export default function TemplateEditorClient({
         exitHref="/criador-de-sites/novo"
         initialSite={initialSite}
         onResolveChannel={async input => {
-          const result = await resolveYoutubeChannel(input);
-          if (!result.ok) throw new Error(result.error);
-          return { id: result.id, name: result.name };
+          try {
+            const result = await resolveYoutubeChannel(input);
+            if (!result.ok) throw new Error(result.error);
+            return { id: result.id, name: result.name };
+          } catch (error) {
+            throw new Error(friendlyError(error));
+          }
         }}
         onSave={async site => {
-          const result = await saveTemplateDraft(templateId, site);
-          if (result.ok) setHasDraft(true);
-          return result;
+          try {
+            const result = await saveTemplateDraft(templateId, site);
+            if (result.ok) setHasDraft(true);
+            return result;
+          } catch (error) {
+            return { error: friendlyError(error), ok: false };
+          }
         }}
         onUploadFont={async file => {
-          const data = new FormData();
-          data.append("file", file);
-          const result = await uploadSiteFont(data);
-          if (!result.ok) throw new Error(result.error);
-          return { name: result.name, url: result.url };
+          try {
+            const data = new FormData();
+            data.append("file", file);
+            const result = await uploadSiteFont(data);
+            if (!result.ok) throw new Error(result.error);
+            return { name: result.name, url: result.url };
+          } catch (error) {
+            throw new Error(friendlyError(error));
+          }
         }}
         onUploadImage={uploadSiteMedia}
         originalSite={originalSite}

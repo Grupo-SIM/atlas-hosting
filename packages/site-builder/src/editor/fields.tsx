@@ -11,6 +11,8 @@ import {
 } from "../blocks/youtube.js";
 import {
   IMAGE_FORMATS,
+  imageFormatError,
+  mediaKindOf,
   UPLOAD_LIMIT_MB,
   uploadSizeError,
   VIDEO_FORMATS,
@@ -19,6 +21,7 @@ import { AdPreviewDialog } from "./AdPreviewDialog.js";
 import { ratioLabel } from "./ad-crop.js";
 import { ColorPickerButton } from "./ColorPicker.js";
 import { Icon } from "./icons.js";
+import { linkProblem, mediaUrlProblem, normalizeLink } from "./link-rules.js";
 
 /** Confere o canal no YouTube e devolve o ID `UC…` e o nome. Lança `Error` com mensagem para a pessoa. */
 export type ResolveChannel = (
@@ -232,6 +235,22 @@ export function FieldInput({
           type="number"
           value={str}
         />
+      ) : field.kind === "url" ? (
+        <>
+          <input
+            aria-invalid={Boolean(linkProblem(str))}
+            onBlur={() => {
+              const fixed = normalizeLink(str);
+              if (fixed !== str) onChange(fixed);
+            }}
+            onChange={e => onChange(e.target.value)}
+            type="text"
+            value={str}
+          />
+          {linkProblem(str) ? (
+            <small className="sbe-fielderr">{linkProblem(str)}</small>
+          ) : null}
+        </>
       ) : (
         <input
           onChange={e => onChange(e.target.value)}
@@ -292,22 +311,20 @@ function ImageField({
 
   const send = async (file: File | undefined) => {
     if (!(file && onUpload)) return;
-    if (
-      !(
-        file.type.startsWith("image/") ||
-        (media && file.type.startsWith("video/"))
-      )
-    ) {
+    const kind = mediaKindOf(file);
+    if (!kind || (kind === "video" && !media)) {
       setError(
         media ? "Envie uma imagem ou um vídeo." : "Envie um arquivo de imagem."
       );
       return;
     }
+    const badFormat = kind === "image" ? imageFormatError(file) : null;
+    if (badFormat) {
+      setError(badFormat);
+      return;
+    }
     // Passou do limite: avisa agora, sem gastar o envio (o servidor também recusa).
-    const tooBig = uploadSizeError(
-      file,
-      file.type.startsWith("video/") ? "video" : "image"
-    );
+    const tooBig = uploadSizeError(file, kind);
     if (tooBig) {
       setError(tooBig);
       return;
@@ -434,6 +451,9 @@ function ImageField({
         type="text"
         value={value}
       />
+      {mediaUrlProblem(value) ? (
+        <small className="sbe-fielderr">{mediaUrlProblem(value)}</small>
+      ) : null}
       {value ? (
         <div className="sbe-row" style={{ justifyContent: "flex-start" }}>
           {adSpec && !parseMediaSource(value)?.kind?.startsWith("embed") ? (
@@ -461,7 +481,7 @@ function ImageField({
         <AdPreviewDialog
           busy={uploading}
           fileSize={staged.file.size}
-          isVideo={staged.file.type.startsWith("video/")}
+          isVideo={mediaKindOf(staged.file) === "video"}
           mode="confirm"
           onClose={() => setStaged(null)}
           onConfirm={async () => {

@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { adSizeOfKey, adSpec } from "./blocks/ads.js";
 import {
   formatSize,
+  imageFormatError,
+  mediaKindOf,
   UPLOAD_LIMIT_MB,
   uploadLimitBytes,
   uploadSizeError,
@@ -79,5 +81,36 @@ describe("nomes dos anúncios", () => {
       "2 anúncios na lateral direita",
       "3 anúncios na lateral direita",
     ]);
+  });
+});
+
+describe("tipo do arquivo escolhido", () => {
+  test("pelo tipo que o navegador informa", () => {
+    expect(mediaKindOf({ name: "a.bin", type: "image/png" })).toBe("image");
+    expect(mediaKindOf({ name: "a.bin", type: "video/mp4" })).toBe("video");
+  });
+
+  test("tipo vazio (acontece com .svg em alguns computadores): vale a extensão", () => {
+    expect(mediaKindOf({ name: "logo.SVG", type: "" })).toBe("image");
+    expect(mediaKindOf({ name: "tela.mov", type: "" })).toBe("video");
+    expect(mediaKindOf({ name: "foto.jpeg" })).toBe("image");
+  });
+
+  test("outros arquivos não são mídia", () => {
+    expect(mediaKindOf({ name: "doc.pdf", type: "application/pdf" })).toBe(
+      null
+    );
+    expect(mediaKindOf({ name: "semextensao", type: "" })).toBe(null);
+  });
+
+  test("formatos de imagem que o editor não converte", () => {
+    expect(
+      imageFormatError({ name: "IMG_1.HEIC", type: "image/heic" })
+    ).toContain("não é aceito");
+    expect(imageFormatError({ name: "a.bmp", type: "" })).not.toBeNull();
+    expect(imageFormatError({ name: "logo.svg", type: "image/svg+xml" })).toBe(
+      null
+    );
+    expect(imageFormatError({ name: "a.webp", type: "image/webp" })).toBe(null);
   });
 });

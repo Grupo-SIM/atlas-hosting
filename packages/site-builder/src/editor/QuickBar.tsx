@@ -3,7 +3,7 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import type { FieldDef } from "../blocks/types.js";
 import { fontStack, SITE_FONTS } from "../renderer/fonts.js";
-import { uploadSizeError } from "../upload-limits.js";
+import { mediaKindOf, uploadSizeError } from "../upload-limits.js";
 import { ColorPickerButton } from "./ColorPicker.js";
 import {
   AnimationControl,
@@ -286,7 +286,7 @@ function ImportedEditor({ media }: { media: QuickMedia }) {
 
   const choose = async (file: File | undefined) => {
     if (!(file && media.onUpload)) return;
-    if (!file.type.startsWith("video/")) {
+    if (mediaKindOf(file) !== "video") {
       setError("Envie um arquivo de vídeo.");
       return;
     }

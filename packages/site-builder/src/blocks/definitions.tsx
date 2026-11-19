@@ -826,7 +826,7 @@ const image = defineBlock(z.object({ alt: str(), src: str(), url: str() }), {
   group: "media",
   label: "Imagem",
   render: (p, ctx) => (
-    <div className="sb-container sb-image">
+    <div className="sb-container sb-image" data-sb-field="src alt url">
       {p.url ? (
         <a href={href(ctx, p.url)} {...newTab(p.url)}>
           <Img alt={p.alt} src={p.src} />

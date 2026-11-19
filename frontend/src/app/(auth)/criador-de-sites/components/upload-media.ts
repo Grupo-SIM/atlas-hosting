@@ -1,5 +1,6 @@
 "use client";
 
+import { mediaKindOf } from "@repo/site-builder";
 import { uploadSiteImage, uploadSiteVideo } from "../actions";
 import { uploadFailureMessage } from "./upload-errors";
 
@@ -8,7 +9,7 @@ import { uploadFailureMessage } from "./upload-errors";
  * (anúncios e posts aceitam vídeo); qualquer falha vira uma mensagem que a pessoa entende.
  */
 export async function uploadSiteMedia(file: File): Promise<string> {
-  const kind = file.type.startsWith("video/") ? "video" : "image";
+  const kind = mediaKindOf(file) === "video" ? "video" : "image";
   try {
     const data = new FormData();
     data.append("file", file);

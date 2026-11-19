@@ -31,6 +31,7 @@ import { AiPanel } from "./AiPanel.js";
 import { ConfirmDialog, type ConfirmRequest } from "./ConfirmDialog.js";
 import { ContentPanel } from "./ContentPanel.js";
 import { elementTree } from "./dom-tree.js";
+import { clearDraft, readDraft, saveDraft } from "./draft-backup.js";
 import { ElementsPanel } from "./ElementsPanel.js";
 import type { ResolveChannel } from "./fields.js";
 import {
@@ -128,6 +129,22 @@ export interface SiteEditorProps {
 
 type Device = "desktop" | "mobile" | "tablet";
 
+/** `localStorage` pode lançar erro só de ser acessado (janela privada, dados do site bloqueados): vira um armazenamento vazio. */
+const browserStore = (): Pick<
+  Storage,
+  "getItem" | "removeItem" | "setItem"
+> => {
+  try {
+    return window.localStorage;
+  } catch {
+    return {
+      getItem: () => null,
+      removeItem: () => undefined,
+      setItem: () => undefined,
+    };
+  }
+};
+
 const PANELS_KEY = "sbe:panels";
 const PANEL_MIN = 200;
 const PANEL_MAX = 560;
@@ -194,6 +211,28 @@ const itemName = (el: HTMLElement) =>
 
 /** Imagem, vídeo ou player dentro da moldura da mídia de um post. */
 const MEDIA_IN_FRAME = "img,video,iframe";
+
+/** Espaço de imagem ainda sem arquivo no bloco "Imagem": também recebe alças, para já dar o tamanho antes de enviar. */
+const isEmptyImage = (el: Element | null | undefined): el is HTMLElement =>
+  el instanceof HTMLElement &&
+  el.classList.contains("sb-img-empty") &&
+  Boolean(el.closest(".sb-image"));
+
+/** Largura em % do espaço do elemento (0,1 de precisão; nunca passa de 100). */
+const resizeWidth = (w: number, maxW: number): number =>
+  maxW > 0 ? Math.min(100, Math.round((w / maxW) * 1000) / 10) : 100;
+
+/** Proporção largura ÷ altura do corte, entre 0,25 e 4. */
+const resizeRatio = (w: number, h: number): number =>
+  Math.round(Math.min(4, Math.max(0.25, w / Math.max(1, h))) * 100) / 100;
+
+/** O bloco de verdade que contém o elemento (um `<a>` em volta da imagem é "inline" e não serve de medida). */
+function layoutParent(el: HTMLElement): HTMLElement | null {
+  let p = el.parentElement;
+  while (p && getComputedStyle(p).display.startsWith("inline"))
+    p = p.parentElement;
+  return p;
+}
 
 /** Elemento "clicável" sob o ponteiro: links e botões valem como um item só. */
 function pickElement(target: HTMLElement): HTMLElement | null {
@@ -503,6 +542,8 @@ export function SiteEditor({
     "error" | "idle" | "saved" | "saving"
   >("idle");
   const [saveError, setSaveError] = useState("");
+  // Cópia de um salvamento que falhou numa visita anterior: oferece recuperar.
+  const [recoverable, setRecoverable] = useState<Site | null>(null);
   const [review, setReview] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState("");
@@ -742,21 +783,31 @@ export function SiteEditor({
           );
           setSaveState("saved");
           setSaveError("");
+          if (storageKey) clearDraft(browserStore(), storageKey);
           return true;
         }
         savedRef.current = current;
         setSaveState("saved");
         setSaveError("");
+        if (storageKey) clearDraft(browserStore(), storageKey);
         return true;
       }
       setSaveState("error");
       setSaveError(result.error);
+      if (storageKey) saveDraft(browserStore(), storageKey, current);
     } catch {
       setSaveState("error");
       setSaveError("Não foi possível salvar. Tente novamente.");
+      if (storageKey) saveDraft(browserStore(), storageKey, current);
     }
     return false;
-  }, [flash]);
+  }, [flash, storageKey]);
+
+  // Ao abrir: se um salvamento anterior falhou, a cópia do navegador pode ser recuperada.
+  useEffect(() => {
+    if (!storageKey) return;
+    setRecoverable(readDraft(browserStore(), storageKey, initialSite));
+  }, [storageKey, initialSite]);
 
   // Salva sozinho um instante depois da última edição.
   useEffect(() => {
@@ -822,7 +873,8 @@ export function SiteEditor({
       !isShape &&
       (picked instanceof HTMLImageElement ||
         picked instanceof HTMLVideoElement ||
-        picked instanceof HTMLIFrameElement)
+        picked instanceof HTMLIFrameElement ||
+        isEmptyImage(picked))
         ? picked
         : null;
     const target = media ?? generic;
@@ -850,7 +902,7 @@ export function SiteEditor({
 
   /** De que lado o elemento está preso no espaço dele: define de onde ele cresce ao arrastar uma alça. */
   const anchorOf = (el: HTMLElement): "center" | "left" | "right" => {
-    const parent = el.parentElement;
+    const parent = layoutParent(el);
     if (!parent) return "center";
     const r = el.getBoundingClientRect();
     const p = parent.getBoundingClientRect();
@@ -997,9 +1049,12 @@ export function SiteEditor({
   };
 
   /**
-   * Arrastar as alças de qualquer imagem ou vídeo: a quina muda o tamanho todo (sem cortar); as alças dos lados e
-   * a de baixo mudam a moldura e cortam o que passar. Grava largura e altura em px no estilo do elemento. Vídeo
-   * de link (player) só muda de tamanho, porque tem proporção fixa.
+   * Arrastar as alças de qualquer imagem ou vídeo (ou do espaço de imagem ainda vazio): a quina muda o tamanho todo,
+   * sem cortar; as alças dos lados e a de baixo mudam a moldura e cortam o que passar. Vídeo de link (player) só
+   * muda de tamanho, porque tem proporção fixa.
+   *
+   * Responsivo: a largura é gravada em % do espaço do elemento e o corte vira proporção (`aspect-ratio`), nunca
+   * px. Assim o tamanho acompanha a tela: no celular a imagem encolhe junto em vez de estourar a coluna.
    */
   const startElementResize = (
     blockId: string,
@@ -1010,7 +1065,7 @@ export function SiteEditor({
     const el = node && elPath ? elementAt(node, elPath) : null;
     const block = findBlock(siteRef.current, blockId);
     const start = pointerStart.current;
-    const parent = el?.parentElement;
+    const parent = el ? layoutParent(el) : null;
     if (!(node && el && block && start && parent)) return;
     const path = pathWithin(el, node);
     const cs = getComputedStyle(parent);
@@ -1021,7 +1076,9 @@ export function SiteEditor({
     const iframe = el instanceof HTMLIFrameElement;
     const w0 = el.offsetWidth;
     const h0 = el.offsetHeight;
-    const hadHeight = block.elStyles?.[path]?.height !== undefined;
+    const saved = block.elStyles?.[path];
+    const hadCrop =
+      saved?.height !== undefined || saved?.aspectRatio !== undefined;
     const side = corner.includes("w") ? -1 : 1;
     const anchor = anchorOf(el);
     const factor =
@@ -1035,11 +1092,12 @@ export function SiteEditor({
             ? -1
             : 0;
     // Corte só em imagem e vídeo de arquivo; o player de link e a quina só escalam.
-    const crop = !iframe && (mode === "side" || mode === "height" || hadHeight);
+    const crop = !iframe && (mode === "side" || mode === "height" || hadCrop);
     let w = w0;
     let h = h0;
     let moved = false;
     shapeDrag.current = true;
+    const minW = Math.max(24, maxW * 0.05);
     const move = (ev: globalThis.PointerEvent) => {
       moved = true;
       const dx = (ev.clientX - start.x) / zoom;
@@ -1048,15 +1106,21 @@ export function SiteEditor({
         if (iframe) return;
         h = Math.min(3000, Math.max(24, h0 + dy));
       } else {
-        w = Math.min(maxW, Math.max(24, w0 + factor * dx));
-        if (mode === "corner" || iframe) h = h0 * (w / w0);
+        w = Math.min(maxW, Math.max(minW, w0 + factor * dx));
+        if (mode === "corner" && hadCrop) h = h0 * (w / w0);
       }
       el.dataset.liveSize = "1";
-      el.style.setProperty("width", `${Math.round(w)}px`, "important");
-      if (crop || mode === "corner" || iframe) {
-        el.style.setProperty("height", `${Math.round(h)}px`, "important");
+      el.style.setProperty("width", `${resizeWidth(w, maxW)}%`, "important");
+      el.style.setProperty("height", "auto", "important");
+      if (crop) {
+        el.style.setProperty(
+          "aspect-ratio",
+          String(resizeRatio(w, h)),
+          "important"
+        );
+        el.style.setProperty("min-height", "0", "important");
+        el.style.setProperty("object-fit", "cover", "important");
       }
-      if (crop) el.style.setProperty("object-fit", "cover", "important");
       paintMedia();
       paintSelectionBox();
     };
@@ -1077,11 +1141,16 @@ export function SiteEditor({
           path,
           crop
             ? {
-                height: Math.round(h),
+                aspectRatio: resizeRatio(w, h),
+                height: "auto",
                 objectFit: "cover",
-                width: Math.round(w),
+                width: `${resizeWidth(w, maxW)}%`,
               }
-            : { height: undefined, width: Math.round(w) }
+            : {
+                aspectRatio: undefined,
+                height: undefined,
+                width: `${resizeWidth(w, maxW)}%`,
+              }
         ),
         {
           id: blockId,
@@ -2516,7 +2585,7 @@ export function SiteEditor({
       : null;
     const mediaEl = inner ?? el;
     const kind: QuickKind =
-      mediaEl instanceof HTMLImageElement
+      mediaEl instanceof HTMLImageElement || isEmptyImage(mediaEl)
         ? "image"
         : mediaEl instanceof HTMLVideoElement ||
             mediaEl instanceof HTMLIFrameElement
@@ -2809,6 +2878,49 @@ export function SiteEditor({
       ) : null}
       <div className="sbe-center">
         {banner ? <div className="sbe-banner">{banner}</div> : null}
+        {recoverable ? (
+          <div className="sbe-banner sbe-recover" role="alert">
+            <span>
+              Há alterações deste site que não chegaram a ser salvas (o
+              salvamento falhou). Quer recuperá-las?
+            </span>
+            <button
+              className="sbe-lime"
+              onClick={() => {
+                edit(recoverable, {
+                  kind: "Editado",
+                  label: "Alterações recuperadas",
+                });
+                setRecoverable(null);
+              }}
+              type="button"
+            >
+              Recuperar
+            </button>
+            <button
+              className="sbe-btn"
+              onClick={() => {
+                if (storageKey) clearDraft(browserStore(), storageKey);
+                setRecoverable(null);
+              }}
+              type="button"
+            >
+              Descartar
+            </button>
+          </div>
+        ) : null}
+        {saveState === "error" && saveError ? (
+          <div className="sbe-banner sbe-recover" role="alert">
+            <span>{saveError}</span>
+            <button
+              className="sbe-btn"
+              onClick={() => void save()}
+              type="button"
+            >
+              Tentar de novo
+            </button>
+          </div>
+        ) : null}
         <div className="sbe-top">
           <button
             className="sbe-ibtn"

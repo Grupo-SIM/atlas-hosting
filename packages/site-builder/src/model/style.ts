@@ -2,6 +2,7 @@
 export const BLOCK_STYLE_KEYS = [
   "alignItems",
   "animation",
+  "aspectRatio",
   "background",
   "borderColor",
   "borderRadius",
@@ -66,7 +67,13 @@ export const isValidStyle = (style: Record<string, string | number>) =>
 /** Caminho de um elemento dentro do bloco: posições `nth-child` separadas por ponto (ex.: "1.2.1"). */
 export const ELEMENT_PATH = /^\d{1,3}(\.\d{1,3}){0,11}$/;
 
-const UNITLESS = new Set(["opacity", "fontWeight", "order", "zIndex"]);
+const UNITLESS = new Set([
+  "aspectRatio",
+  "opacity",
+  "fontWeight",
+  "order",
+  "zIndex",
+]);
 
 /** Cores "ao passar o mouse": viram uma regra `:hover`, nunca estilo inline. */
 export const HOVER_STYLE_PROPS = {
@@ -121,7 +128,10 @@ export function elementStylesCss(
         const prop = k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`);
         const value =
           typeof v === "number" && !UNITLESS.has(k) && v !== 0 ? `${v}px` : v;
-        return `${prop}:${value}!important`;
+        // Proporção definida: a altura vem dela, então o mínimo do espaço vazio não pode segurar a caixa.
+        return k === "aspectRatio"
+          ? `${prop}:${value}!important;min-height:0!important`
+          : `${prop}:${value}!important`;
       })
       .join(";");
     if (decls) css += `[data-block-id="${id}"]${selector}{${decls}}`;

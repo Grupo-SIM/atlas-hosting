@@ -60,6 +60,28 @@ describe("mediaMode", () => {
 });
 
 describe("mediaTarget", () => {
+  test("espaço de imagem ainda vazio: o bloco aponta o campo", () => {
+    const empty = mediaTarget({
+      defaults: {},
+      fields,
+      hint: { field: "image", n: 1, value: "" },
+      props: { image: "" },
+      site,
+    });
+    expect(empty).toMatchObject({ key: "image", kind: "block", value: "" });
+    // Sem o bloco apontar o campo, vazio continua sem alvo; e campo já preenchido não vale como "vazio".
+    expect(find({ image: "" }, "")).toBe(null);
+    expect(
+      mediaTarget({
+        defaults: {},
+        fields,
+        hint: { field: "image", n: 1, value: "" },
+        props: { image: "/a.jpg" },
+        site,
+      })
+    ).toBe(null);
+  });
+
   test("imagem do bloco", () => {
     expect(find({ image: "/a.jpg" }, "/a.jpg")).toMatchObject({
       key: "image",

@@ -315,6 +315,9 @@ export const editorCss = `
 .sbe-scrim{position:absolute;inset:0;background:rgba(29,28,26,.28);display:flex;align-items:flex-start;justify-content:flex-end;padding:52px 12px 12px;z-index:50}
 .sbe-banner{flex-shrink:0;padding:8px 14px;background:#fdf1e0;border-bottom:1px solid #f1d3a6;color:#92550c;font-size:12px;line-height:1.45}
 .sbe-banner b{font-weight:600}
+.sbe-fielderr{display:block;margin-top:4px;color:#b42318;font-size:11.5px;line-height:1.35}
+.sbe-field input[aria-invalid=true]{border-color:#e0a4a0}
+.sbe-recover{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.sbe-recover span{flex:1 1 260px}.sbe-recover button{flex:none;padding:5px 12px;border-radius:999px;font-size:12px}
 .sbe-banner code{font-family:'JetBrains Mono',ui-monospace,monospace;background:#1d1c1a;color:#d6f34a;border-radius:4px;padding:1px 5px;font-size:11px;margin-right:4px}
 .sbe-devbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .sbe-devbar>div:first-child{flex:1;min-width:260px}

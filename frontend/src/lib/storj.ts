@@ -84,7 +84,8 @@ export async function uploadSiteBuilderImage(file: Buffer | ArrayBuffer) {
   }
 
   const buffer = file instanceof ArrayBuffer ? Buffer.from(file) : file;
-  const processedBuffer = await sharp(buffer)
+  // `density` só vale para SVG: logos vetoriais pequenos saem nítidos em vez de uma bitmap de poucos pixels.
+  const processedBuffer = await sharp(buffer, { density: 192 })
     .resize({ width: 1600, withoutEnlargement: true })
     .webp({ quality: 82 })
     .toBuffer();
