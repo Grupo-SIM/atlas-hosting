@@ -38,8 +38,12 @@ export function hasComplimentaryAtlasHosting(): boolean {
 export async function getBuilderUser(): Promise<User | null> {
   const user = await getRealUser();
   if (canAccessSiteBuilder(user)) return user;
-  // Quem o admin master liberou para editar templates entra no Criador de Sites (galeria e editor do template).
-  return (await hasAreaAccess(user, "admin_templates", "view")) ? user : null;
+  // Quem o admin master liberou para editar templates entra no Criador de Sites (galeria e editor do template), e
+  // quem recebeu a área "Criador de Sites" usa o Criador com a própria conta.
+  if (await hasAreaAccess(user, "admin_templates", "view")) return user;
+  return (await hasAreaAccess(user, "client_site_builder", "view"))
+    ? user
+    : null;
 }
 
 /** Para páginas: quem não é admin vê 404, como se a rota não existisse. */

@@ -17,10 +17,13 @@ import {
 
 export function MobileSidebarSheet({
   canAccessSiteBuilder = false,
+  clientAreas = null,
   hasAdminAreas = false,
   isAdmin,
 }: {
   canAccessSiteBuilder?: boolean;
+  /** Áreas do painel do cliente liberadas; `null` = sem restrição. */
+  clientAreas?: string[] | null;
   /** Usuário de equipe com acesso a alguma área de administração: mostra o botão do painel, sem virar admin. */
   hasAdminAreas?: boolean;
   isAdmin: boolean;
@@ -31,7 +34,7 @@ export function MobileSidebarSheet({
   const inAdminMode = isAdminPath(pathname);
 
   const filteredNavigation: NavigationItem[] = [
-    ...getClientNavigation({ canAccessSiteBuilder, isAdmin }),
+    ...getClientNavigation({ canAccessSiteBuilder, clientAreas, isAdmin }),
     ...(isAdmin || hasAdminAreas ? [adminEntryItem] : []),
   ];
 

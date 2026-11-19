@@ -28,16 +28,46 @@ export interface NavigationItem {
   adminModeSwitch?: "enter" | "exit";
   /** Prefixo que mantém o item ativo em rotas internas (ex.: o editor), além do `href`. */
   match?: string;
+  /** Área do painel do cliente que libera o item para contas com acesso de equipe (sem área, todo mundo vê). */
+  area?: string;
 }
 
 /** Sidebar padrão — o que todo cliente vê. */
 export const clientNavigation: NavigationItem[] = [
   { href: "/home", icon: LayoutDashboard, name: "Painel", showForAdmin: true },
-  { href: "/manage/vps", icon: Server, name: "Hospedagem", showForAdmin: true },
-  { href: "/vps-plans", icon: ShoppingCart, name: "Contratar Servidor" },
-  { href: "/minhas-assinaturas", icon: Package, name: "Minhas Assinaturas" },
-  { href: "/domains", icon: Globe, name: "Domínios", showForAdmin: true },
-  { href: "/billing", icon: FileText, name: "Faturas", showForAdmin: true },
+  {
+    area: "client_hosting",
+    href: "/manage/vps",
+    icon: Server,
+    name: "Hospedagem",
+    showForAdmin: true,
+  },
+  {
+    area: "client_hosting",
+    href: "/vps-plans",
+    icon: ShoppingCart,
+    name: "Contratar Servidor",
+  },
+  {
+    area: "client_hosting",
+    href: "/minhas-assinaturas",
+    icon: Package,
+    name: "Minhas Assinaturas",
+  },
+  {
+    area: "client_domains",
+    href: "/domains",
+    icon: Globe,
+    name: "Domínios",
+    showForAdmin: true,
+  },
+  {
+    area: "client_billing",
+    href: "/billing",
+    icon: FileText,
+    name: "Faturas",
+    showForAdmin: true,
+  },
   {
     builderOnly: true,
     href: "/criador-de-sites",
@@ -45,21 +75,36 @@ export const clientNavigation: NavigationItem[] = [
     match: "/criador-de-sites",
     name: "Criador de Sites",
   },
-  { href: "/affiliate", icon: Users, name: "Afiliados" },
-  { href: "/carteira", icon: Wallet, name: "Carteira" },
-  { href: "/vouchers", icon: Ticket, name: "Vouchers" },
+  {
+    area: "client_affiliate",
+    href: "/affiliate",
+    icon: Users,
+    name: "Afiliados",
+  },
+  { area: "client_billing", href: "/carteira", icon: Wallet, name: "Carteira" },
+  {
+    area: "client_affiliate",
+    href: "/vouchers",
+    icon: Ticket,
+    name: "Vouchers",
+  },
 ];
 
 export function getClientNavigation({
   canAccessSiteBuilder,
+  clientAreas = null,
   isAdmin,
 }: {
   canAccessSiteBuilder: boolean;
+  /** Áreas do painel do cliente liberadas para a conta; `null` = sem restrição (cliente comum e admin). */
+  clientAreas?: readonly string[] | null;
   isAdmin: boolean;
 }): NavigationItem[] {
   return clientNavigation.filter(item => {
     if (item.adminOnly) return isAdmin;
     if (item.builderOnly) return canAccessSiteBuilder || isAdmin;
+    if (item.area && clientAreas && !clientAreas.includes(item.area))
+      return false;
     return !isAdmin || item.showForAdmin;
   });
 }

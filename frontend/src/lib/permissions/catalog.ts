@@ -2,8 +2,9 @@
  * Catálogo de áreas com permissão por nível (nenhum / visualiza / edita). É a fonte única de verdade: a tela de
  * acessos, a validação no servidor e as checagens das páginas e ações leem daqui.
  *
- * `available: false` = a área aparece na tela como "em breve" e **não pode ser concedida** (as páginas do painel
- * do cliente ainda não checam permissão por área; liberar de mentira seria pior que não liberar).
+ * `available: false` = a área aparece na tela como "em breve" e **não pode ser concedida** (liberar de mentira seria
+ * pior que não liberar). As áreas `client_*` controlam o menu e as seções do painel do cliente de contas com acesso de
+ * equipe (ver `client.ts`); cliente comum, sem acesso de equipe, vê tudo como sempre.
  */
 export type AreaLevel = "edit" | "view";
 export type Level = AreaLevel | "none";
@@ -15,6 +16,8 @@ export interface AreaDef {
   label: string;
   /** Área que pede cuidado (credenciais, cobrança, gente): ganha o aviso ⚠ na tela. */
   sensitive?: boolean;
+  /** Só liga ou desliga (sem "visualiza" e "edita"): as áreas do painel do cliente. */
+  binary?: boolean;
 }
 
 export interface AreaGroup {
@@ -120,17 +123,59 @@ export const AREA_GROUPS: AreaGroup[] = [
   {
     areas: [
       {
-        available: false,
+        available: true,
+        binary: true,
         description:
-          "Painel, hospedagem, domínios, e-mail, sites e faturas da conta.",
-        key: "client_panel",
-        label: "Painel do cliente",
+          "Servidores VPS, contratar servidor, assinaturas, cPanel, bancos de dados, DNS e sites da conta.",
+        key: "client_hosting",
+        label: "Hospedagem e servidores",
+      },
+      {
+        available: true,
+        binary: true,
+        description: "Registrar, transferir e gerenciar domínios.",
+        key: "client_domains",
+        label: "Domínios",
+      },
+      {
+        available: true,
+        binary: true,
+        description: "Caixas de e-mail da conta.",
+        key: "client_email",
+        label: "E-mail",
+      },
+      {
+        available: true,
+        binary: true,
+        description: "Faturas, carteira e pagamentos.",
+        key: "client_billing",
+        label: "Faturas e carteira",
+      },
+      {
+        available: true,
+        binary: true,
+        description: "Afiliados, indicações e vouchers.",
+        key: "client_affiliate",
+        label: "Afiliados e vouchers",
+      },
+      {
+        available: true,
+        binary: true,
+        description:
+          "Criar, editar e publicar sites com a própria conta. Não inclui editar os templates de demonstração (isso é “Editar templates”).",
+        key: "client_site_builder",
+        label: "Criador de Sites",
       },
     ],
     key: "cliente",
-    label: "Conta do cliente (em breve)",
+    label: "Painel do cliente",
   },
 ];
+
+/** Áreas do painel do cliente (o que a conta enxerga no menu dela), por oposição às de administração. */
+export const CLIENT_AREA_PREFIX = "client_";
+export const isClientArea = (key: string): boolean =>
+  key.startsWith(CLIENT_AREA_PREFIX);
 
 export const ALL_AREAS: AreaDef[] = AREA_GROUPS.flatMap(g => g.areas);
 export const GRANTABLE_AREAS = ALL_AREAS.filter(a => a.available);
@@ -162,7 +207,7 @@ export const isGrantableArea = (key: string): boolean =>
  * vale dentro de Usuários.
  */
 export const ADMIN_AREA_KEYS = GRANTABLE_AREAS.filter(
-  a => !isMasterOnlyArea(a.key)
+  a => !(isMasterOnlyArea(a.key) || isClientArea(a.key))
 ).map(a => a.key);
 
 /** Qual área protege cada rota de administração (prefixo mais longo vence). */

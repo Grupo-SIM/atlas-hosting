@@ -1,6 +1,7 @@
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { getUser } from "@/lib/auth";
+import { clientAreasFor } from "@/lib/permissions/client";
 
 export default async function Dashboard({
   searchParams: _searchParams,
@@ -9,11 +10,13 @@ export default async function Dashboard({
 }) {
   const user = await getUser();
   const searchParams = await _searchParams;
+  // Conta com acesso de equipe só vê os atalhos das áreas liberadas.
+  const areas = user ? await clientAreasFor(user) : null;
 
   return (
     <div className="space-y-8 p-6 pb-16">
       <WelcomeHeader user={user} />
-      <QuickActions />
+      <QuickActions areas={areas} />
       {/* <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         <div className="lg:col-span-8 flex flex-col h-full">
           <Suspense fallback={<div className="h-full" />}>

@@ -8,6 +8,7 @@ import Sidebar from "@/components/layouts/components/Sidebar";
 import Topbar from "@/components/layouts/components/Topbar";
 import { getUser } from "@/lib/auth";
 import { hasAnyAdminArea, hasAreaAccess } from "@/lib/permissions/access";
+import { clientAreasFor } from "@/lib/permissions/client";
 import { canAccessSiteBuilder } from "@/lib/site-builder/access";
 import { RenewalPendingBanner } from "./components";
 
@@ -31,7 +32,11 @@ export default async function AuthLayout({
   // Quem o master liberou para editar templates também vê o Criador de Sites no menu.
   const showBuilder =
     canAccessSiteBuilder(user) ||
-    (await hasAreaAccess(user, "admin_templates", "view"));
+    (await hasAreaAccess(user, "admin_templates", "view")) ||
+    (await hasAreaAccess(user, "client_site_builder", "view"));
+  // Conta com acesso de equipe só vê as áreas do painel do cliente que foram liberadas (`null` = vê tudo).
+  const areas = await clientAreasFor(user);
+  const clientAreas = areas ? [...areas] : null;
 
   return (
     <div className="flex max-h-screen min-h-screen overflow-hidden bg-background">
@@ -45,6 +50,7 @@ export default async function AuthLayout({
       <AdminThemeSync />
       <Sidebar
         canAccessSiteBuilder={showBuilder}
+        clientAreas={clientAreas}
         hasAdminAreas={hasAdminAreas}
         isAdmin={user.isAdmin || false}
       />
@@ -52,6 +58,7 @@ export default async function AuthLayout({
         <ImpersonationBanner />
         <Topbar
           canAccessSiteBuilder={showBuilder}
+          clientAreas={clientAreas}
           hasAdminAreas={hasAdminAreas}
           isAdmin={user.isAdmin || false}
         />

@@ -273,8 +273,10 @@ export function TeamUserDialog({
             <div className="text-muted-foreground text-xs">{email}</div>
             <p className="mt-2 text-muted-foreground text-xs">
               Conta que já existe na plataforma. Aqui você só define o que ela
-              acessa; o nome, o e-mail e a senha continuam como estão, e ela
-              segue usando a conta de cliente normalmente.
+              acessa; o nome, o e-mail e a senha continuam como estão. Com
+              acesso de equipe, a conta passa a ver só o que for marcado aqui,
+              inclusive no painel do cliente (hospedagem, domínios, faturas,
+              Criador de Sites…). Marque o que ela deve continuar usando.
             </p>
           </section>
         ) : (
@@ -447,9 +449,14 @@ export function TeamUserDialog({
                           {area.available && level && (
                             <div className="flex shrink-0 items-center gap-2 text-xs">
                               <span className="text-muted-foreground">
-                                {level === "edit" ? "Edita" : "Visualiza"}
+                                {area.binary
+                                  ? "Liberado"
+                                  : level === "edit"
+                                    ? "Edita"
+                                    : "Visualiza"}
                               </span>
                               {profile === "editor" &&
+                                !area.binary &&
                                 !isMasterOnlyArea(area.key) && (
                                   <Switch
                                     checked={level === "edit"}

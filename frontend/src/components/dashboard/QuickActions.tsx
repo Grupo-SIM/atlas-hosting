@@ -55,7 +55,13 @@ export const itemVariants: Variants = {
   },
 };
 
-export function QuickActions() {
+export function QuickActions({
+  areas = null,
+}: {
+  /** Áreas do painel do cliente liberadas para a conta; `null` = sem restrição (cliente comum e admin). */
+  areas?: ReadonlySet<string> | null;
+}) {
+  const can = (area: string) => !areas || areas.has(area);
   return (
     <MotionDiv
       animate="visible"
@@ -64,102 +70,118 @@ export function QuickActions() {
       variants={containerVariants}
     >
       {/* Hosting Section */}
-      <MotionDiv variants={itemVariants}>
-        <SectionHeading
-          gradient="from-sky-500 to-blue-600"
-          Icon={Server}
-          title="Hospedagem"
-        />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <QuickActionCard
+      {can("client_hosting") ? (
+        <MotionDiv variants={itemVariants}>
+          <SectionHeading
             gradient="from-sky-500 to-blue-600"
-            href="/manage/vps"
             Icon={Server}
-            pattern="grid"
-            subtitle="Acompanhe e gerencie seus servidores ativos"
-            title="Meus Servidores"
+            title="Hospedagem"
           />
-          <QuickActionCard
-            gradient="from-orange-500 to-amber-600"
-            href="/vps-plans"
-            Icon={ShoppingCart}
-            pattern="waves"
-            subtitle="Encontre o servidor ideal para seu projeto"
-            title="Contratar Servidor"
-          />
-        </div>
-      </MotionDiv>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <QuickActionCard
+              gradient="from-sky-500 to-blue-600"
+              href="/manage/vps"
+              Icon={Server}
+              pattern="grid"
+              subtitle="Acompanhe e gerencie seus servidores ativos"
+              title="Meus Servidores"
+            />
+            <QuickActionCard
+              gradient="from-orange-500 to-amber-600"
+              href="/vps-plans"
+              Icon={ShoppingCart}
+              pattern="waves"
+              subtitle="Encontre o servidor ideal para seu projeto"
+              title="Contratar Servidor"
+            />
+          </div>
+        </MotionDiv>
+      ) : null}
 
       {/* Domains Section */}
-      <MotionDiv variants={itemVariants}>
-        <SectionHeading
-          gradient="from-emerald-500 to-teal-600"
-          Icon={Globe}
-          title="Domínios"
-        />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <QuickActionCard
-            gradient="from-blue-500 to-indigo-500"
-            href="/domains"
+      {can("client_domains") ? (
+        <MotionDiv variants={itemVariants}>
+          <SectionHeading
+            gradient="from-emerald-500 to-teal-600"
             Icon={Globe}
-            pattern="grid"
-            subtitle="Gerencie seus domínios registrados"
-            title="Meus Domínios"
+            title="Domínios"
           />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <QuickActionCard
+              gradient="from-blue-500 to-indigo-500"
+              href="/domains"
+              Icon={Globe}
+              pattern="grid"
+              subtitle="Gerencie seus domínios registrados"
+              title="Meus Domínios"
+            />
 
-          <QuickActionCard
-            gradient="from-green-500 to-emerald-500"
-            href="/domain?tab=register&returnTo=%2Fhome"
-            Icon={HousePlus}
-            pattern="dots"
-            subtitle="Registre um novo domínio"
-            title="Novo Domínio"
-          />
-        </div>
-      </MotionDiv>
+            <QuickActionCard
+              gradient="from-green-500 to-emerald-500"
+              href="/domain?tab=register&returnTo=%2Fhome"
+              Icon={HousePlus}
+              pattern="dots"
+              subtitle="Registre um novo domínio"
+              title="Novo Domínio"
+            />
+          </div>
+        </MotionDiv>
+      ) : null}
 
       {/* Financial Section */}
-      <MotionDiv variants={itemVariants}>
-        <SectionHeading
-          gradient="from-violet-500 to-pink-600"
-          Icon={CreditCard}
-          title="Financeiro"
-        />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <QuickActionCard
-            gradient="from-violet-500 to-purple-600"
-            href="/minhas-assinaturas"
-            Icon={Package}
-            pattern="grid"
-            subtitle="Consulte e renove suas assinaturas"
-            title="Gerenciar Assinaturas"
+      {can("client_hosting") ||
+      can("client_affiliate") ||
+      can("client_billing") ? (
+        <MotionDiv variants={itemVariants}>
+          <SectionHeading
+            gradient="from-violet-500 to-pink-600"
+            Icon={CreditCard}
+            title="Financeiro"
           />
-          <QuickActionCard
-            gradient="from-cyan-500 to-sky-600"
-            href="/affiliate"
-            Icon={Users}
-            pattern="grid"
-            subtitle="Acompanhe suas indicações, comissões e saques"
-            title="Programa de Afiliados"
-          />
-          <QuickActionCard
-            gradient="from-amber-500 to-yellow-600"
-            href="/vouchers"
-            Icon={Ticket}
-            pattern="waves"
-            subtitle="Consulte e copie seus vouchers de desconto"
-            title="Meus Vouchers"
-          />
-          <QuickActionCard
-            gradient="from-blue-500 to-cyan-500"
-            href="/billing"
-            Icon={History}
-            pattern="dots"
-            subtitle="Visualize seu histórico de transações"
-            title="Histórico de Pagamentos"
-          />
-        </div>
-      </MotionDiv>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {can("client_hosting") ? (
+              <QuickActionCard
+                gradient="from-violet-500 to-purple-600"
+                href="/minhas-assinaturas"
+                Icon={Package}
+                pattern="grid"
+                subtitle="Consulte e renove suas assinaturas"
+                title="Gerenciar Assinaturas"
+              />
+            ) : null}
+            {can("client_affiliate") ? (
+              <QuickActionCard
+                gradient="from-cyan-500 to-sky-600"
+                href="/affiliate"
+                Icon={Users}
+                pattern="grid"
+                subtitle="Acompanhe suas indicações, comissões e saques"
+                title="Programa de Afiliados"
+              />
+            ) : null}
+            {can("client_affiliate") ? (
+              <QuickActionCard
+                gradient="from-amber-500 to-yellow-600"
+                href="/vouchers"
+                Icon={Ticket}
+                pattern="waves"
+                subtitle="Consulte e copie seus vouchers de desconto"
+                title="Meus Vouchers"
+              />
+            ) : null}
+            {can("client_billing") ? (
+              <QuickActionCard
+                gradient="from-blue-500 to-cyan-500"
+                href="/billing"
+                Icon={History}
+                pattern="dots"
+                subtitle="Visualize seu histórico de transações"
+                title="Histórico de Pagamentos"
+              />
+            ) : null}
+          </div>
+        </MotionDiv>
+      ) : null}
     </MotionDiv>
   );
 }

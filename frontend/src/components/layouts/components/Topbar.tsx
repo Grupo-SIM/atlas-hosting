@@ -25,12 +25,15 @@ export default async function Topbar({
   children,
   canAccessSiteBuilder,
   className,
+  clientAreas,
   hasAdminAreas,
   isAdmin,
   ...props
 }: PropsWithChildren<
   HTMLAttributes<HTMLHeadElement> & {
     canAccessSiteBuilder?: boolean;
+    /** Áreas do painel do cliente liberadas; `null`/ausente = sem restrição. */
+    clientAreas?: string[] | null;
     hasAdminAreas?: boolean;
     isAdmin?: boolean;
   }
@@ -47,6 +50,7 @@ export default async function Topbar({
     >
       <MobileSidebarSheet
         canAccessSiteBuilder={canAccessSiteBuilder}
+        clientAreas={clientAreas}
         hasAdminAreas={hasAdminAreas}
         isAdmin={isAdmin ?? false}
       />
