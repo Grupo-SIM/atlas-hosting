@@ -33,15 +33,20 @@ test("taxa por cima: comprador paga valor fechado + taxa", () => {
 });
 
 test("config do admin inválida cai no padrão", () => {
-  expect(normalizeResaleConfig({})).toEqual({ feePercent: 10, minPriceBrl: 100 });
+  expect(normalizeResaleConfig({})).toEqual({
+    feePercent: 10,
+    minPriceBrl: 100,
+  });
   expect(normalizeResaleConfig({ feePercent: -1, minPriceBrl: 0 })).toEqual({
     feePercent: 10,
     minPriceBrl: 100,
   });
-  expect(normalizeResaleConfig({ feePercent: 12.5, minPriceBrl: 250 })).toEqual({
-    feePercent: 12.5,
-    minPriceBrl: 250,
-  });
+  expect(normalizeResaleConfig({ feePercent: 12.5, minPriceBrl: 250 })).toEqual(
+    {
+      feePercent: 12.5,
+      minPriceBrl: 250,
+    }
+  );
 });
 
 test("valor mínimo do dono respeita o piso", () => {
@@ -65,10 +70,14 @@ test("só quem está com a vez responde", () => {
   };
   expect(proposalActionError(open, "seller", "accept", now)).toBeNull();
   expect(proposalActionError(open, "seller", "counter", now)).toBeNull();
-  expect(proposalActionError(open, "buyer", "accept", now)).toContain("Aguarde");
+  expect(proposalActionError(open, "buyer", "accept", now)).toContain(
+    "Aguarde"
+  );
   // Cancelar é do comprador, mesmo fora da vez dele.
   expect(proposalActionError(open, "buyer", "cancel", now)).toBeNull();
-  expect(proposalActionError(open, "seller", "cancel", now)).toContain("Só quem");
+  expect(proposalActionError(open, "seller", "cancel", now)).toContain(
+    "Só quem"
+  );
 });
 
 test("proposta encerrada ou expirada não aceita ação", () => {
@@ -96,29 +105,37 @@ test("ciclo de 12 meses e fatura de renovação 15 dias antes", () => {
   const start = new Date("2026-03-10T12:00:00Z");
   expect(cycleEnd(start).toISOString()).toBe("2027-03-10T12:00:00.000Z");
   const expires = new Date("2027-03-10T12:00:00Z");
-  expect(renewalInvoiceDue(expires, new Date(expires.getTime() - 20 * DAY))).toBe(
-    false
-  );
-  expect(renewalInvoiceDue(expires, new Date(expires.getTime() - 15 * DAY))).toBe(
-    true
-  );
+  expect(
+    renewalInvoiceDue(expires, new Date(expires.getTime() - 20 * DAY))
+  ).toBe(false);
+  expect(
+    renewalInvoiceDue(expires, new Date(expires.getTime() - 15 * DAY))
+  ).toBe(true);
 });
 
 test("lembretes: um por marco, sem repetir", () => {
   const expires = new Date("2027-03-10T12:00:00Z");
   const cycle = expires.toISOString();
-  expect(dueReminder(expires, [], new Date(expires.getTime() - 30 * DAY))).toBeNull();
+  expect(
+    dueReminder(expires, [], new Date(expires.getTime() - 30 * DAY))
+  ).toBeNull();
 
   const at15 = dueReminder(expires, [], new Date(expires.getTime() - 14 * DAY));
   expect(at15).toEqual({ days: 15, key: `${cycle}:15` });
   expect(
-    dueReminder(expires, [`${cycle}:15`], new Date(expires.getTime() - 14 * DAY))
+    dueReminder(
+      expires,
+      [`${cycle}:15`],
+      new Date(expires.getTime() - 14 * DAY)
+    )
   ).toBeNull();
 
   // Pulou direto para a véspera (job parado): manda só o de 1 dia.
   const at1 = dueReminder(expires, [], new Date(expires.getTime() - DAY / 2));
   expect(at1?.days).toBe(1);
-  expect(dueReminder(expires, [], new Date(expires.getTime() + DAY))).toBeNull();
+  expect(
+    dueReminder(expires, [], new Date(expires.getTime() + DAY))
+  ).toBeNull();
 });
 
 test("saldo da carteira soma comissões e vendas e desconta saques", () => {
@@ -157,11 +174,21 @@ test("estado do template para quem vê a galeria", () => {
     ownerUserId: "dono",
     status: "active",
   };
-  const mine = templateStateFor({ exclusivity, floor: 100, setting, viewerId: "dono" });
+  const mine = templateStateFor({
+    exclusivity,
+    floor: 100,
+    setting,
+    viewerId: "dono",
+  });
   expect(mine.kind).toBe("owned_by_me");
   expect(blocksOthers(mine)).toBe(false);
 
-  const other = templateStateFor({ exclusivity, floor: 100, setting, viewerId: "b" });
+  const other = templateStateFor({
+    exclusivity,
+    floor: 100,
+    setting,
+    viewerId: "b",
+  });
   expect(other).toEqual({
     exclusivityId: "ex-1",
     kind: "owned_by_other",
@@ -187,4 +214,43 @@ test("estado do template para quem vê a galeria", () => {
       viewerId: "b",
     }).kind
   ).toBe("available");
+});
+
+test("reserva de checkout vencida não prende o template (mesmo que o job de limpeza não tenha rodado)", () => {
+  const setting = { annualPriceBrl: 4000, enabled: true };
+  const now = new Date("2026-11-19T12:00:00Z");
+  const reserva = (reservedUntil: Date | null) => ({
+    expiresAt: null,
+    id: "ex-1",
+    minAskingPriceBrl: null,
+    ownerUserId: "outra-pessoa",
+    reservedUntil,
+    status: "reserved",
+  });
+  const ver = (reservedUntil: Date | null, viewerId = "eu") =>
+    templateStateFor({
+      exclusivity: reserva(reservedUntil),
+      floor: 100,
+      now,
+      setting,
+      viewerId,
+    });
+  // ainda dentro do prazo: continua reservada para os outros
+  expect(ver(new Date("2026-11-19T20:00:00Z")).kind).toBe("reserved");
+  // vencida: volta a estar à venda
+  expect(ver(new Date("2026-11-17T20:48:43Z"))).toEqual({
+    annualPriceBrl: 4000,
+    kind: "available",
+  });
+  // sem prazo gravado, na dúvida continua reservada
+  expect(ver(null).kind).toBe("reserved");
+  // vencida e sem preço configurado: template público
+  expect(
+    templateStateFor({
+      exclusivity: reserva(new Date("2026-11-17T20:48:43Z")),
+      floor: 100,
+      now,
+      viewerId: "eu",
+    })
+  ).toEqual({ kind: "public" });
 });

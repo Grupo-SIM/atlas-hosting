@@ -51,7 +51,9 @@ export function normalizeResaleConfig(
         ? fee
         : DEFAULT_RESALE_FEE_PERCENT,
     minPriceBrl:
-      Number.isFinite(min) && min > 0 ? round2(min) : DEFAULT_RESALE_MIN_PRICE_BRL,
+      Number.isFinite(min) && min > 0
+        ? round2(min)
+        : DEFAULT_RESALE_MIN_PRICE_BRL,
   };
 }
 
@@ -240,15 +242,28 @@ export function templateStateFor(input: {
     status: string;
     expiresAt: Date | null;
     minAskingPriceBrl: number | null;
+    /** Até quando vale a reserva do checkout (só em `reserved`). */
+    reservedUntil?: Date | null;
   } | null;
   viewerId: string;
   floor: number;
+  /** Agora (para testar); o padrão é o relógio. */
+  now?: Date;
 }): TemplateExclusivityState {
-  const { exclusivity, setting, viewerId, floor } = input;
+  const { setting, viewerId, floor } = input;
+  const now = input.now ?? new Date();
+  // Reserva de checkout vencida não prende o template: quem cuida de marcá-la como liberada é um job de 15 em 15 min,
+  // e se ele atrasar ou falhar a galeria não pode continuar dizendo que "outra pessoa está comprando".
+  const exclusivity =
+    input.exclusivity?.status === "reserved" &&
+    input.exclusivity.reservedUntil &&
+    input.exclusivity.reservedUntil.getTime() <= now.getTime()
+      ? undefined
+      : input.exclusivity;
   if (exclusivity) {
     if (exclusivity.status === "reserved") {
       return exclusivity.ownerUserId === viewerId
-        ? { kind: "available", annualPriceBrl: setting?.annualPriceBrl ?? 0 }
+        ? { annualPriceBrl: setting?.annualPriceBrl ?? 0, kind: "available" }
         : { kind: "reserved" };
     }
     if (exclusivity.status === "active" || exclusivity.status === "past_due") {
