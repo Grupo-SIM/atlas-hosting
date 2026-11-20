@@ -28,6 +28,8 @@ export default function ReviewBanner({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const reviewer = mode === "owner" ? "o dono do site" : "o Lucas";
+  // "de" + "o" = "do" ("validação do Lucas", não "de o Lucas").
+  const ofReviewer = `d${reviewer}`;
 
   const send = async () => {
     if (busy) return;
@@ -54,8 +56,8 @@ export default function ReviewBanner({
           : state === "changes_requested"
             ? `${reviewer[0]?.toUpperCase()}${reviewer.slice(1)} pediu ajustes. Veja o comentário, corrija e envie de novo.`
             : state === "draft"
-              ? `Suas alterações ainda não valem: envie para validação de ${reviewer}.`
-              : `Suas alterações não mudam o site: precisam da validação de ${reviewer}. Publicar fica para depois de aprovadas.`}
+              ? `Suas alterações ainda não valem: envie para validação ${ofReviewer}.`
+              : `Suas alterações não mudam o site: precisam da validação ${ofReviewer}. Publicar fica para depois de aprovadas.`}
       </span>
       {requestId ? (
         <Link

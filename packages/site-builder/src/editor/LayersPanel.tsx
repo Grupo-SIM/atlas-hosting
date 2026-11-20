@@ -31,6 +31,9 @@ export interface LayerSection {
 
 interface Props {
   elPath: string;
+  /** O elemento foi excluído (oculto) pelo Delete? Aparece apagado, com o olho para mostrar de novo. */
+  elementHidden?: (blockId: string, path: string) => boolean;
+  onShowElement?: (blockId: string, path: string) => void;
   getElements: (blockId: string) => ElementNode[];
   onAdd: (type: string) => void;
   onInsert: (type: string, target: DropTarget) => void;
@@ -47,6 +50,8 @@ interface Props {
 /** Árvore de blocos da página aberta (cabeçalho, conteúdo e rodapé), como as camadas do protótipo. */
 export function LayersPanel({
   elPath,
+  elementHidden,
+  onShowElement,
   getElements,
   onAdd,
   onInsert,
@@ -86,15 +91,16 @@ export function LayersPanel({
     nodes.map(n => {
       const key = `${blockId}:${n.path}`;
       const closed = collapsed[key];
+      const off = elementHidden?.(blockId, n.path) ?? false;
       return (
         <div key={n.path}>
           {/* biome-ignore lint/a11y/noStaticElementInteractions: linha clicável da árvore */}
           <div
-            className={
-              selectedId === blockId && elPath === n.path
-                ? "sbe-layer el on"
-                : "sbe-layer el"
-            }
+            className={[
+              "sbe-layer el",
+              selectedId === blockId && elPath === n.path ? "on" : "",
+              off ? "off" : "",
+            ].join(" ")}
             onClick={() => onSelectElement(blockId, n.path, n.label)}
             style={{ paddingLeft: 6 + depth * 14 }}
           >
@@ -120,6 +126,19 @@ export function LayersPanel({
               <Icon name="box" size={11} />
             </span>
             <span className="name">{n.label}</span>
+            {off && onShowElement ? (
+              <button
+                className="eye off"
+                onClick={e => {
+                  e.stopPropagation();
+                  onShowElement(blockId, n.path);
+                }}
+                title="Mostrar de novo"
+                type="button"
+              >
+                <Icon name="eye-off" size={13} />
+              </button>
+            ) : null}
             {onLayer && selectedId === blockId && elPath === n.path ? (
               <span className="lay">
                 <button

@@ -5,7 +5,7 @@ mock.module("@/lib/auth", () => ({
   getUser: async () => ({ id: "u" }),
 }));
 
-let failRead = false;
+let failRead: false | { code?: string } = false;
 let settingRow: { mode: "master" | "owner" } | undefined;
 
 mock.module("@/lib/db", () => ({
@@ -14,7 +14,8 @@ mock.module("@/lib/db", () => ({
       from: () => ({
         where: () => ({
           limit: async () => {
-            if (failRead) throw new Error('relation "x" does not exist');
+            if (failRead)
+              throw Object.assign(new Error("falha na leitura"), failRead);
             return settingRow ? [settingRow] : [];
           },
         }),
@@ -87,8 +88,16 @@ describe("getAdminMode", () => {
     expect(await getAdminMode("u1")).toBe("master");
   });
 
-  test("se a leitura falha (tabela ausente), fecha: valida com o master", async () => {
-    failRead = true;
+  test("tabela ainda não criada (migração pendente): ninguém tem modo, vale o automático", async () => {
+    failRead = { code: "42P01" };
+    expect(await getAdminMode("u1")).toBe("auto");
+    failRead = false;
+  });
+
+  test("outra falha na leitura (banco fora): fecha, valida com o master", async () => {
+    failRead = { code: "57P01" };
+    expect(await getAdminMode("u1")).toBe("master");
+    failRead = {};
     expect(await getAdminMode("u1")).toBe("master");
     failRead = false;
   });

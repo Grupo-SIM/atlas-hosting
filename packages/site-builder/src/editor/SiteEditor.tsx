@@ -30,6 +30,7 @@ import { themeVars } from "../renderer/styles.js";
 import { AiPanel } from "./AiPanel.js";
 import { ConfirmDialog, type ConfirmRequest } from "./ConfirmDialog.js";
 import { ContentPanel } from "./ContentPanel.js";
+import { deleteTargetFor } from "./delete-target.js";
 import { elementTree } from "./dom-tree.js";
 import { clearDraft, readDraft, saveDraft } from "./draft-backup.js";
 import { ElementsPanel } from "./ElementsPanel.js";
@@ -41,7 +42,7 @@ import {
   type SnapLines,
   snap,
 } from "./free-move.js";
-import { type FocusHint, Inspector } from "./Inspector.js";
+import { type FocusHint, Inspector, matchItem } from "./Inspector.js";
 import { Icon } from "./icons.js";
 import { inlineTarget } from "./inline-text.js";
 import { type LayerSection, LayersPanel } from "./LayersPanel.js";
@@ -1462,6 +1463,11 @@ export function SiteEditor({
   ) => {
     if (!selected) return;
     const name = labelOf(selected.type);
+    // Com um item de dentro do bloco selecionado, o Delete apaga só ele (nunca o bloco inteiro).
+    if (action === "delete" && elPath) {
+      deleteElement();
+      return;
+    }
     if (action === "delete") {
       edit(removeBlock(site, selected.id), {
         kind: "Removido",
@@ -1480,6 +1486,70 @@ export function SiteEditor({
         label: `${action === "up" ? "Moveu para cima" : "Moveu para baixo"} · ${name}`,
       });
     }
+  };
+
+  /**
+   * Exclui só o item selecionado dentro do bloco: um item de lista sai da lista; qualquer outro elemento fica oculto
+   * (só ele). Depois limpa a seleção, para um segundo Delete não apagar o bloco inteiro sem querer.
+   */
+  const deleteElement = () => {
+    if (!(selected && elPath)) return;
+    const node = blockEl(selected.id);
+    const el = node ? elementAt(node, elPath) : null;
+    const def = getBlockDefinition(selected.type);
+    const stored = (key: string) => selected.props[key] ?? def?.defaults[key];
+    const siblings = el?.parentElement
+      ? Array.from(el.parentElement.children).filter(
+          c => !["LINK", "SCRIPT", "STYLE"].includes(c.tagName)
+        )
+      : [];
+    const target = deleteTargetFor({
+      elPath,
+      listLength: key => {
+        const v = stored(key);
+        return Array.isArray(v) ? v.length : -1;
+      },
+      matches: def
+        ? matchItem(def.fields, selected.props, def.defaults, focusHint)
+        : [],
+      position: el ? siblings.indexOf(el) : -1,
+      siblings: siblings.length,
+    });
+    const what = elName || "item";
+    if (target.kind === "listItem") {
+      const list = stored(target.key);
+      if (!Array.isArray(list)) return;
+      edit(
+        updateBlockProps(site, selected.id, {
+          [target.key]: list.filter((_, i) => i !== target.index),
+        }),
+        { id: selected.id, kind: "Removido", label: `Excluiu · ${what}` }
+      );
+    } else if (target.kind === "hide") {
+      edit(
+        updateElementStyle(site, selected.id, target.path, { display: "none" }),
+        { id: selected.id, kind: "Oculto", label: `Excluiu · ${what}` }
+      );
+    }
+    setElPath("");
+    setElName("");
+    setSelectedId(null);
+    flash(
+      `Excluído: ${what}. Ctrl+Z desfaz; nas camadas, o olho mostra de novo.`
+    );
+  };
+
+  /** Item que o Delete ocultou: aparece apagado nas camadas, e o olho mostra de novo. */
+  const elementHidden = (blockId: string, path: string) =>
+    findBlock(site, blockId)?.elStyles?.[path]?.display === "none";
+  const showElement = (blockId: string, path: string) => {
+    const block = findBlock(site, blockId);
+    if (!block) return;
+    edit(updateElementStyle(site, blockId, path, { display: undefined }), {
+      id: blockId,
+      kind: "Editado",
+      label: `Mostrou · item de ${labelOf(block.type)}`,
+    });
   };
 
   const toggleHidden = (id: string) => {
@@ -2745,6 +2815,7 @@ export function SiteEditor({
 
           {leftTab === "camadas" && (
             <LayersPanel
+              elementHidden={elementHidden}
               elPath={elPath}
               getElements={getElements}
               onAdd={addBlock}
@@ -2759,6 +2830,7 @@ export function SiteEditor({
                 selectElement(id, elementPath, label);
                 revealInCanvas(id, elementPath);
               }}
+              onShowElement={showElement}
               onToggleHidden={toggleHidden}
               sections={layerSections}
               selectedId={selectedId}

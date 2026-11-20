@@ -450,7 +450,7 @@ function Fold({
 }
 
 /** Campo (ou item de lista) do bloco que mostra o texto/imagem do elemento clicado. */
-type FieldMatch =
+export type FieldMatch =
   | { field: FieldDef; kind: "field" }
   | { field: FieldDef; index: number; kind: "item" };
 
@@ -1635,7 +1635,18 @@ export function Inspector({
             </button>
           </div>
         ) : null}
-        {elPath ? null : (
+        {elPath ? (
+          <div className="sbe-actions">
+            <button
+              className="danger"
+              onClick={() => onAction("delete")}
+              title="Excluir só este item (Delete); o bloco fica"
+              type="button"
+            >
+              <Icon name="trash-2" size={14} />
+            </button>
+          </div>
+        ) : (
           <div className="sbe-actions">
             {(
               [

@@ -38,6 +38,13 @@ export async function getAdminMode(userId: string): Promise<ValidationMode> {
       .limit(1);
     return row?.mode ?? "auto";
   } catch (error) {
+    // Tabela ainda não criada (migração 0018 pendente): ninguém tem modo configurado, então vale o padrão
+    // (automático). Fechar aqui mandava tudo para "proposta", que também depende da 0018: nenhum admin salvava.
+    const code =
+      (error as { code?: string }).code ??
+      (error as { cause?: { code?: string } }).cause?.code;
+    if (code === "42P01") return "auto";
+    // Outra falha (banco fora, etc.): fecha, valida com o master.
     console.error("[delegação] não foi possível ler o modo do admin:", error);
     return "master";
   }
