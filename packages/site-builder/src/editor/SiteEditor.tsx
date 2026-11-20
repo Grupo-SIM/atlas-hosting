@@ -790,6 +790,7 @@ export function SiteEditor({
         setSaveState("saved");
         setSaveError("");
         if (storageKey) clearDraft(browserStore(), storageKey);
+        if (result.aviso) flash(result.aviso);
         return true;
       }
       setSaveState("error");

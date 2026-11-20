@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type Fx, fxMapSchema } from "./fx.js";
-import { ELEMENT_PATH, isValidStyle } from "./style.js";
+import { ELEMENT_PATH, isValidStyle, STYLE_VALUE_MAX } from "./style.js";
 
 /** Âncora de bloco (`id` no HTML, alvo de links `#nome`): letra inicial, depois letras, números, `-` e `_`. */
 export const BLOCK_ANCHOR = /^[A-Za-z][\w-]{0,59}$/;
@@ -13,7 +13,7 @@ export const blockSchema: z.ZodType<Block> = z.lazy(() =>
     elStyles: z
       .record(
         z
-          .record(z.union([z.string().max(200), z.number()]))
+          .record(z.union([z.string().max(STYLE_VALUE_MAX), z.number()]))
           .refine(isValidStyle, "Estilo inválido")
       )
       .refine(
@@ -26,7 +26,7 @@ export const blockSchema: z.ZodType<Block> = z.lazy(() =>
     id: z.string(),
     props: z.record(z.unknown()),
     style: z
-      .record(z.union([z.string().max(200), z.number()]))
+      .record(z.union([z.string().max(STYLE_VALUE_MAX), z.number()]))
       .refine(isValidStyle, "Estilo inválido")
       .optional(),
     type: z.string(),

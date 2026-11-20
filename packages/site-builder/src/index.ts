@@ -32,6 +32,7 @@ export {
 } from "./import/post-externo.js";
 export { diffSites, type SiteChange } from "./model/diff.js";
 export * from "./model/index.js";
+export { describeSiteIssue, repairSite } from "./model/repair.js";
 export { siteSchema } from "./model/schema.js";
 export {
   BLOCK_STYLE_KEYS,

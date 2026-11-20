@@ -6,6 +6,7 @@ import {
   type Fx,
   type Site,
 } from "../model/index.js";
+import { ELEMENT_PATH, isStyleEntry } from "../model/style.js";
 import type { Route } from "../renderer/routes.js";
 
 /**
@@ -149,7 +150,8 @@ export function updateBlockStyle(
   const style = { ...(block.style ?? {}) };
   for (const [key, value] of Object.entries(patch)) {
     if (value === undefined || value === "") delete style[key];
-    else style[key] = value;
+    // Valor que o servidor recusaria (`;`, `NaN`, propriedade fora da lista): não entra, senão nada mais salva.
+    else if (isStyleEntry(key, value)) style[key] = value;
   }
   block.style = Object.keys(style).length ? style : undefined;
   return next;
@@ -161,6 +163,8 @@ export function updateElementStyle(
   path: string,
   patch: Record<string, string | number | undefined>
 ): Site {
+  // Caminho que o servidor não aceita (elemento fundo demais): melhor não aplicar do que travar o salvamento.
+  if (!ELEMENT_PATH.test(path)) return site;
   const next = clone(site);
   const block = findBlock(next, id);
   if (!block) return site;
@@ -168,7 +172,7 @@ export function updateElementStyle(
   const style = { ...(all[path] ?? {}) };
   for (const [key, value] of Object.entries(patch)) {
     if (value === undefined || value === "") delete style[key];
-    else style[key] = value;
+    else if (isStyleEntry(key, value)) style[key] = value;
   }
   if (Object.keys(style).length) all[path] = style;
   else delete all[path];
@@ -183,6 +187,7 @@ export function updateBlockFx(
   path: string,
   patch: Partial<Record<keyof Fx, Fx[keyof Fx]>>
 ): Site {
+  if (path !== "" && !ELEMENT_PATH.test(path)) return site;
   const next = clone(site);
   const block = findBlock(next, id);
   if (!block) return site;

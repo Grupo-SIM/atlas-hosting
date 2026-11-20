@@ -8,6 +8,8 @@ export type SaveResult =
        */
       mesclar?: { categories: Category[]; posts: Post[] };
       ok: true;
+      /** O servidor consertou algo inválido antes de gravar (ex.: um estilo com `;`): o editor avisa o quê. */
+      aviso?: string;
     }
   | { error: string; ok: false };
 

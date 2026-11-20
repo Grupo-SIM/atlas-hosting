@@ -3,15 +3,19 @@
 import type { Site } from "@repo/site-builder";
 import { type AiConfig, SiteEditor } from "@repo/site-builder/editor";
 import { type ReactNode, useRef, useState } from "react";
+import { postEditorJson } from "@/lib/site-builder/editor-client";
 import { friendlyError } from "@/lib/site-builder/stale-action";
-import { resolveYoutubeChannel, saveSite, uploadSiteFont } from "../../actions";
+import { resolveYoutubeChannel, type SaveSiteResult } from "../../actions";
 import {
   disconnectAi,
   finishAiLogin,
   getAiStatus,
   startAiLogin,
 } from "../../ai-actions";
-import { uploadSiteMedia } from "../../components/upload-media";
+import {
+  uploadSiteFontFile,
+  uploadSiteMedia,
+} from "../../components/upload-media";
 import { useSiteLive } from "../../components/useSiteLive";
 import { republishSite } from "../../publish-actions";
 import PublishSetupModal, {
@@ -114,26 +118,16 @@ export default function SiteEditorClient({
           }
         }}
         onSave={async site => {
-          try {
-            const result = await saveSite(siteId, site, abertoEm.current);
-            if (result.ok && result.sincronizadoEm)
-              abertoEm.current = result.sincronizadoEm;
-            return result;
-          } catch (error) {
-            return { error: friendlyError(error), ok: false };
-          }
+          // Rota de endereço fixo: continua salvando mesmo com o editor aberto desde antes de um deploy.
+          const result = await postEditorJson<SaveSiteResult>(
+            `/api/site-builder/sites/${siteId}/save`,
+            { abertoEm: abertoEm.current, content: site }
+          );
+          if (result.ok && result.sincronizadoEm)
+            abertoEm.current = result.sincronizadoEm;
+          return result;
         }}
-        onUploadFont={async file => {
-          try {
-            const data = new FormData();
-            data.append("file", file);
-            const result = await uploadSiteFont(data);
-            if (!result.ok) throw new Error(result.error);
-            return { name: result.name, url: result.url };
-          } catch (error) {
-            throw new Error(friendlyError(error));
-          }
-        }}
+        onUploadFont={uploadSiteFontFile}
         onUploadImage={uploadSiteMedia}
         originalSite={originalSite}
         publish={{

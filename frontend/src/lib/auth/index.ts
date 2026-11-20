@@ -85,6 +85,18 @@ async function resolvePrincipal(): Promise<User | null> {
 }
 
 /**
+ * Há alguém logado? Não redireciona (ao contrário de `getUser`): as rotas do editor usam para responder "sessão
+ * expirada" sem tirar a pessoa da página, onde estão as alterações que ainda não foram salvas.
+ */
+export async function hasSession(): Promise<boolean> {
+  try {
+    return (await resolvePrincipal()) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Usuário real da sessão, IGNORANDO impersonação. Use em guards de admin
  * (ex.: iniciar/parar impersonação) para saber quem é o admin de verdade.
  */

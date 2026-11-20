@@ -15,14 +15,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { postEditorJson } from "@/lib/site-builder/editor-client";
 import { friendlyError } from "@/lib/site-builder/stale-action";
 import { aiConfig } from "../../../[siteId]/components/SiteEditorClient";
-import { resolveYoutubeChannel, uploadSiteFont } from "../../../actions";
-import { uploadSiteMedia } from "../../../components/upload-media";
+import { resolveYoutubeChannel } from "../../../actions";
+import {
+  uploadSiteFontFile,
+  uploadSiteMedia,
+} from "../../../components/upload-media";
 import {
   discardTemplateDraft,
   publishTemplateDraft,
-  saveTemplateDraft,
 } from "../../../template-actions";
 
 /**
@@ -147,25 +150,15 @@ export default function TemplateEditorClient({
           }
         }}
         onSave={async site => {
-          try {
-            const result = await saveTemplateDraft(templateId, site);
-            if (result.ok) setHasDraft(true);
-            return result;
-          } catch (error) {
-            return { error: friendlyError(error), ok: false };
-          }
+          // Rota de endereço fixo: continua salvando mesmo com o editor aberto desde antes de um deploy.
+          const result = await postEditorJson<{ aviso?: string; ok: true }>(
+            `/api/site-builder/templates/${templateId}/draft`,
+            { content: site }
+          );
+          if (result.ok) setHasDraft(true);
+          return result;
         }}
-        onUploadFont={async file => {
-          try {
-            const data = new FormData();
-            data.append("file", file);
-            const result = await uploadSiteFont(data);
-            if (!result.ok) throw new Error(result.error);
-            return { name: result.name, url: result.url };
-          } catch (error) {
-            throw new Error(friendlyError(error));
-          }
-        }}
+        onUploadFont={uploadSiteFontFile}
         onUploadImage={uploadSiteMedia}
         originalSite={originalSite}
         storageKey={`template:${templateId}`}

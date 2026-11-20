@@ -9,8 +9,9 @@ import {
   FORBIDDEN_MESSAGE,
   getTemplateEditor,
 } from "@/lib/site-builder/access";
+import { checkSiteContent } from "@/lib/site-builder/site-content";
 
-type ActionResult = { ok: true } | { error: string; ok: false };
+type ActionResult = { aviso?: string; ok: true } | { error: string; ok: false };
 
 const refresh = (templateId: string) => {
   revalidatePath("/criador-de-sites/novo");
@@ -30,16 +31,11 @@ export async function saveTemplateDraft(
   if (!getTemplate(templateId)) {
     return { error: "Template não encontrado.", ok: false };
   }
-  const parsed = siteSchema.safeParse(content);
-  if (!parsed.success) {
-    return {
-      error: "O conteúdo do template é inválido e não foi salvo.",
-      ok: false,
-    };
-  }
+  const parsed = checkSiteContent(content);
+  if (!parsed.ok) return { error: parsed.error, ok: false };
   try {
     const draft = {
-      draftContent: parsed.data,
+      draftContent: parsed.site,
       draftUpdatedAt: new Date(),
       draftUpdatedBy: user.id,
     };
@@ -54,7 +50,7 @@ export async function saveTemplateDraft(
     console.error("[templates] falha ao salvar o rascunho:", error);
     return { error: "Não foi possível salvar o rascunho.", ok: false };
   }
-  return { ok: true };
+  return { aviso: parsed.aviso, ok: true };
 }
 
 /**

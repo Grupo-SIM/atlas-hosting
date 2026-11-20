@@ -15,6 +15,7 @@ import {
 } from "@/lib/db/schema";
 import { hasAreaAccess } from "@/lib/permissions/access";
 import { isMasterAdmin, MASTER_ADMIN_EMAIL } from "@/lib/permissions/master";
+import { checkSiteContent } from "./site-content";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -187,24 +188,19 @@ export async function saveProposal(
   content: unknown,
   reviewer: "master" | "owner"
 ): Promise<Result> {
-  const parsed = siteSchema.safeParse(content);
-  if (!parsed.success) {
-    return {
-      error: "O conteúdo do site é inválido e não foi salvo.",
-      ok: false,
-    };
-  }
+  const parsed = checkSiteContent(content);
+  if (!parsed.ok) return { error: parsed.error, ok: false };
   try {
     const open = await openRequestFor(siteId, requestedBy);
     if (open) {
       await db
         .update(pgBuilderChangeRequest)
-        .set({ content: parsed.data, reviewer, updatedAt: new Date() })
+        .set({ content: parsed.site, reviewer, updatedAt: new Date() })
         .where(eq(pgBuilderChangeRequest.id, open.id));
     } else {
       await db
         .insert(pgBuilderChangeRequest)
-        .values({ content: parsed.data, requestedBy, reviewer, siteId });
+        .values({ content: parsed.site, requestedBy, reviewer, siteId });
     }
     return { ok: true };
   } catch (error) {

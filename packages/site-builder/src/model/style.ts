@@ -43,9 +43,20 @@ export type BlockStyle = Partial<Record<BlockStyleKey, string | number>>;
 
 const allowed = new Set<string>(BLOCK_STYLE_KEYS);
 
+/** Tamanho máximo de um valor de estilo (gradientes e sombras com várias camadas cabem com folga). */
+export const STYLE_VALUE_MAX = 600;
+
 /** Valores vão para `style` do React (escapados), mas `;{}<>` nunca fazem sentido num valor CSS. */
-const safeValue = (v: string | number) =>
-  typeof v === "number" ? Number.isFinite(v) : !/[;{}<>]/.test(v);
+const safeValue = (v: unknown) =>
+  typeof v === "number"
+    ? Number.isFinite(v)
+    : typeof v === "string" &&
+      v.length <= STYLE_VALUE_MAX &&
+      !/[;{}<>]/.test(v);
+
+/** Esta propriedade, com este valor, pode ser gravada? (chave da lista e valor sem nada suspeito) */
+export const isStyleEntry = (key: string, value: unknown): boolean =>
+  allowed.has(key) && safeValue(value);
 
 /** Descarta chaves fora da lista e valores suspeitos — vale para dado salvo antes da validação também. */
 export function cleanStyle(
@@ -54,7 +65,7 @@ export function cleanStyle(
   if (!style) return undefined;
   const out: BlockStyle = {};
   for (const [key, value] of Object.entries(style)) {
-    if (allowed.has(key) && safeValue(value)) {
+    if (isStyleEntry(key, value)) {
       out[key as BlockStyleKey] = value;
     }
   }
@@ -62,7 +73,7 @@ export function cleanStyle(
 }
 
 export const isValidStyle = (style: Record<string, string | number>) =>
-  Object.entries(style).every(([k, v]) => allowed.has(k) && safeValue(v));
+  Object.entries(style).every(([k, v]) => isStyleEntry(k, v));
 
 /** Caminho de um elemento dentro do bloco: posições `nth-child` separadas por ponto (ex.: "1.2.1"). */
 export const ELEMENT_PATH = /^\d{1,3}(\.\d{1,3}){0,11}$/;

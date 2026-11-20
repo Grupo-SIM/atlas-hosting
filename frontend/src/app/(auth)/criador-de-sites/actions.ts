@@ -6,7 +6,6 @@ import {
   isWordpressTemplate,
   mediaKindOf,
   type Post,
-  siteSchema,
   UPLOAD_LIMIT_MB,
   uploadLimitBytes,
 } from "@repo/site-builder";
@@ -24,6 +23,7 @@ import {
   resolveSiteActor,
   saveProposal,
 } from "@/lib/site-builder/delegation";
+import { checkSiteContent } from "@/lib/site-builder/site-content";
 import { takeDown } from "@/lib/site-builder/takedown";
 import { getEffectiveTemplate } from "@/lib/site-builder/templates";
 import { resolveYoutubeChannel as lookupYoutubeChannel } from "@/lib/site-builder/youtube";
@@ -44,8 +44,9 @@ const MAX_VIDEO_BYTES = uploadLimitBytes("video");
 
 type ActionResult = { ok: true } | { error: string; ok: false };
 
-type SaveSiteResult =
+export type SaveSiteResult =
   | {
+      aviso?: string;
       mesclar?: { categories: Category[]; posts: Post[] };
       ok: true;
       /** Novo "aberto em" do editor: o que chegou até aqui ele já conhece. */
@@ -170,33 +171,31 @@ export async function saveSite(
     return { error: BLOCKED_SITE_MESSAGE, ok: false };
   }
 
-  const parsed = siteSchema.safeParse(content);
-  if (!parsed.success) {
-    return {
-      error: "O conteúdo do site é inválido e não foi salvo.",
-      ok: false,
-    };
-  }
+  // Conserta o que seria recusado (um estilo inválido, uma página sem título) em vez de perder o site inteiro.
+  const parsed = checkSiteContent(content);
+  if (!parsed.ok) return { error: parsed.error, ok: false };
 
   // Admin editando site de cliente: validação automática (padrão) salva direto; as outras guardam uma proposta que o
   // dono ou o Lucas valida, e o site real só muda se for aprovada.
   if (actor.delegated) {
     const mode = await getAdminMode(user.id);
-    if (mode !== "auto")
-      return saveProposal(siteId, user.id, parsed.data, mode);
+    if (mode !== "auto") {
+      const saved = await saveProposal(siteId, user.id, parsed.site, mode);
+      return saved.ok ? { aviso: parsed.aviso, ok: true } : saved;
+    }
   }
 
   const mesclar =
     abertoEm && !Number.isNaN(Date.parse(abertoEm))
-      ? postsQueChegaram(actor.site.content, parsed.data, abertoEm)
+      ? postsQueChegaram(actor.site.content, parsed.site, abertoEm)
       : { categories: [], posts: [] };
   const novos = new Set(mesclar.posts.map(p => p.id));
   const merged = {
-    ...parsed.data,
-    categories: [...parsed.data.categories, ...mesclar.categories],
+    ...parsed.site,
+    categories: [...parsed.site.categories, ...mesclar.categories],
     posts: [
       ...mesclar.posts,
-      ...parsed.data.posts.filter(p => !novos.has(p.id)),
+      ...parsed.site.posts.filter(p => !novos.has(p.id)),
     ],
   };
 
@@ -204,7 +203,7 @@ export async function saveSite(
     .update(pgBuilderSite)
     .set({
       content: merged,
-      name: parsed.data.name,
+      name: parsed.site.name,
       updatedAt: agora,
     })
     .where(
@@ -219,6 +218,7 @@ export async function saveSite(
     return { error: "Site não encontrado.", ok: false };
   }
   return {
+    aviso: parsed.aviso,
     mesclar: mesclar.posts.length > 0 ? mesclar : undefined,
     ok: true,
     sincronizadoEm: agora.toISOString(),
