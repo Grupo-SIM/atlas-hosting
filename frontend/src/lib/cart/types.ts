@@ -1,6 +1,6 @@
 /** Itens do carrinho guardados no navegador (landing e painel compartilham o mesmo carrinho). */
 
-export const CART_MAX_ITEMS = 10;
+export const CART_MAX_ITEMS = 50;
 
 export interface DomainCartItem {
   id: string;
