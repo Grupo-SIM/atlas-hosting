@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import {
+  applyAnyMinPrice,
   atlasFee,
   blocksOthers,
   buyerTotal,
@@ -253,4 +254,20 @@ test("reserva de checkout vencida não prende o template (mesmo que o job de lim
       viewerId: "eu",
     })
   ).toEqual({ kind: "public" });
+});
+
+test("modo de teste: qualquer valor mínimo, taxa do Atlas mantida", () => {
+  const stored = { feePercent: 10, minPriceBrl: 100 };
+  expect(applyAnyMinPrice(stored, false)).toEqual(stored);
+  const config = applyAnyMinPrice(stored, true);
+  expect(config).toEqual({ feePercent: 10, minPriceBrl: 0.01 });
+  expect(validateAskingPrice(1, config.minPriceBrl)).toBeNull();
+  expect(validateAskingPrice(2, config.minPriceBrl)).toBeNull();
+  expect(minimumOffer(null, config.minPriceBrl)).toBe(0.01);
+  expect(minimumOffer(1, config.minPriceBrl)).toBe(1);
+  expect(
+    validateOfferAmount(0.5, minimumOffer(1, config.minPriceBrl))
+  ).toContain("mínimo");
+  expect(buyerTotal(1, config.feePercent)).toBe(1.1);
+  expect(buyerTotal(2, config.feePercent)).toBe(2.2);
 });

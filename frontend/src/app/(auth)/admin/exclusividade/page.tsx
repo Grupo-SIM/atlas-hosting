@@ -15,7 +15,10 @@ import {
 import { hasAreaAccess } from "@/lib/permissions/access";
 import { templateThumb } from "@/lib/site-builder/template-thumbs";
 import { formatBrl } from "@/lib/template-exclusivity/rules";
-import { getResaleConfig } from "@/lib/template-exclusivity/status";
+import {
+  getStoredResaleConfig,
+  isAnyMinPriceEnabled,
+} from "@/lib/template-exclusivity/status";
 import {
   type AdminOwnerStatus,
   type AdminTemplateRow,
@@ -71,7 +74,7 @@ export default async function AdminExclusivityPage() {
       })
       .from(pgTemplateProposal)
       .where(inArray(pgTemplateProposal.status, ["open", "awaiting_payment"])),
-    getResaleConfig(),
+    getStoredResaleConfig(),
   ]);
 
   const ownerIds = [...new Set(live.map(row => row.ownerUserId))];
@@ -197,6 +200,7 @@ export default async function AdminExclusivityPage() {
       </div>
 
       <ResaleSettingsForm
+        anyMinPrice={isAnyMinPriceEnabled()}
         feePercent={resale.feePercent}
         minPriceBrl={resale.minPriceBrl}
       />

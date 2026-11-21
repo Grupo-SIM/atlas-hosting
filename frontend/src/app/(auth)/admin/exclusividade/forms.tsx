@@ -19,6 +19,8 @@ import { saveResaleSettings, saveTemplateExclusivities } from "./actions";
 /* ------------------------------------------------------------------ Revenda */
 
 export function ResaleSettingsForm(props: {
+  /** `TEMPLATE_RESALE_ANY_MIN_PRICE=true`: o piso está desligado. */
+  anyMinPrice: boolean;
   feePercent: number;
   minPriceBrl: number;
 }) {
@@ -57,6 +59,13 @@ export function ResaleSettingsForm(props: {
             mínimo de venda, nunca abaixo do piso. Vale para as próximas
             faturas.
           </p>
+          {props.anyMinPrice && (
+            <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[13px] text-amber-700 leading-[1.45] dark:text-amber-400">
+              Modo de teste ligado (TEMPLATE_RESALE_ANY_MIN_PRICE): o piso
+              abaixo não está valendo — o dono pode definir qualquer valor
+              mínimo. A taxa do Atlas continua sendo cobrada.
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1.5">

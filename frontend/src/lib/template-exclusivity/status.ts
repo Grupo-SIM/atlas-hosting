@@ -9,6 +9,7 @@ import {
   type TemplateExclusivity,
 } from "@/lib/db/schema";
 import {
+  applyAnyMinPrice,
   blocksOthers,
   normalizeResaleConfig,
   type ResaleConfig,
@@ -16,8 +17,20 @@ import {
   templateStateFor,
 } from "./rules";
 
-/** Taxa do Atlas e piso de venda definidos pelo admin. */
-export async function getResaleConfig(): Promise<ResaleConfig> {
+/**
+ * `TEMPLATE_RESALE_ANY_MIN_PRICE=true` (variável de ambiente, configurável no
+ * Komodo) ignora o piso de venda do admin: o dono pode definir qualquer valor
+ * mínimo (ex.: R$ 1 para testar o pagamento). A taxa do Atlas continua sendo
+ * cobrada. Ausente ou != "true" mantém o piso.
+ */
+export function isAnyMinPriceEnabled(): boolean {
+  return (
+    process.env.TEMPLATE_RESALE_ANY_MIN_PRICE?.trim().toLowerCase() === "true"
+  );
+}
+
+/** Taxa e piso exatamente como o admin salvou (sem o modo de teste). */
+export async function getStoredResaleConfig(): Promise<ResaleConfig> {
   const [config] = await db
     .select({
       feePercent: pgSystemConfig.templateResaleFeePercent,
@@ -26,6 +39,14 @@ export async function getResaleConfig(): Promise<ResaleConfig> {
     .from(pgSystemConfig)
     .limit(1);
   return normalizeResaleConfig(config ?? {});
+}
+
+/** Taxa do Atlas e piso de venda em vigor (o piso some com o modo de teste). */
+export async function getResaleConfig(): Promise<ResaleConfig> {
+  return applyAnyMinPrice(
+    await getStoredResaleConfig(),
+    isAnyMinPriceEnabled()
+  );
 }
 
 /** Registro "vivo" (reservado, ativo ou em carência) de um template, se houver. */

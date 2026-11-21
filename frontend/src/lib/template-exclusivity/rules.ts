@@ -57,6 +57,22 @@ export function normalizeResaleConfig(
   };
 }
 
+/** Piso usado quando `TEMPLATE_RESALE_ANY_MIN_PRICE=true`: qualquer valor a partir de 1 centavo. */
+export const ANY_MIN_PRICE_FLOOR_BRL = 0.01;
+
+/**
+ * Com o modo de teste ligado, o piso do admin deixa de valer (o dono pode
+ * pedir R$ 1, R$ 2...). A taxa do Atlas continua a mesma.
+ */
+export function applyAnyMinPrice(
+  config: ResaleConfig,
+  anyMinPrice: boolean
+): ResaleConfig {
+  return anyMinPrice
+    ? { ...config, minPriceBrl: ANY_MIN_PRICE_FLOOR_BRL }
+    : config;
+}
+
 /** Menor proposta aceita: o mínimo do dono, nunca abaixo do piso global. */
 export function minimumOffer(
   ownerMin: number | null | undefined,
